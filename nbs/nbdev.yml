@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "scholaris"
+  site-url: "https://nicomarr.github.io/scholaris"
+  description: "An advanced research assistant leveraging function calling capabilities."
+  repo-branch: main
+  repo-url: "https://github.com/nicomarr/scholaris"

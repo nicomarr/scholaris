@@ -1,0 +1,7 @@
+website:
+  sidebar:
+    contents:
+      - index.ipynb
+      - 01_core.ipynb
+      - 02_ui.ipynb
+      - 03_demo.ipynb
