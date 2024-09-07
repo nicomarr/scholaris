@@ -605,12 +605,13 @@ import requests
 import re
 
 
-# %% ../nbs/01_core.ipynb 88
+# %% ../nbs/01_core.ipynb 92
 @json_schema_decorator
-def query_openalex_api(identifyer: str, identifyer_type: str="title") -> str:
+def query_openalex_api(query_param: str) -> str:
     """
     Retrieve metadata for a given article from OpenAlex, a comprehensive open-access catalog of global research papers.
-    Use this tool to query the OpenAlex API by using either the title, the PubMed ID, or the digital object identifier (DOI) to retrieve the following metadata:
+    Use this tool to search the OpenAlex API by title, the PubMed ID, or the digital object identifier (DOI) of an article as the query parameter. 
+    This tool returns the following metadata:
     - the OpenAlex ID
     - the digital object identifier (DOI) URL
     - Citation count
@@ -622,8 +623,7 @@ def query_openalex_api(identifyer: str, identifyer_type: str="title") -> str:
     Use this tool only if an article title, PubMed ID or DOI is provided by the user or was extracted from a local PDF file and is present in the conversation history.
     
     Args:
-        identifyer (str): The title, PubMed ID, or DOI of the article to retrieve metadata for.
-        identifyter_type (str): The type of identifier to use for the query. Options are: 'title', 'pmid', or 'doi'. Default is 'title'.
+        query_param (str): The title, PubMed ID, or DOI of the article to retrieve metadata for. May be provided by the user or extracted from a local PDF file and present in the conversation history.
 
     Returns:
         str: A JSON-formatted string including the search results from the OpenAlex database. If no results are found or the API query fails, an appropriate message is returned.
@@ -635,35 +635,33 @@ def query_openalex_api(identifyer: str, identifyer_type: str="title") -> str:
         except KeyError:
             EMAIL = ""
 
-
-
     # Validate the input
-    if not isinstance(identifyer, str) or not identifyer:
-        return json.dumps({"error": "The identifier must be a non-empty string."})
-    if identifyer_type.lower().strip() not in ['title', 'pmid', 'doi']:
-        return json.dumps({"error": "The identifier type must be one of the following: 'title', 'pmid', or 'doi'."})
-    if identifyer.startswith("https://doi.org/"):
-        identifyer = identifyer.replace("https://doi.org/", "")
+    if query_param is None or query_param == "":
+        return json.dumps({"error": "The query parameter must be a non-empty string."})
+    elif not isinstance(query_param, str):
+        query_param = str(query_param)
+    
+    if query_param.startswith("https://doi.org/"):
+        query_param = query_param.replace("https://doi.org/", "")
+    elif query_param.startswith("doi.org/"):
+        query_param = query_param.replace("doi.org/", "")
 
     # Constants
     base_url = "https://api.openalex.org/" # Define the base URL for the OpenAlex API
     doi_regex = r"10.\d{1,9}/[-._;()/:A-Za-z0-9]+" # Regular expression to match DOIs
-
+    
     # Initialize variables
     filter = ""
 
-    if identifyer_type.lower() == 'title':
+    if re.match(doi_regex, query_param):
+        url = f"{base_url}works/https://doi.org/{query_param}"
+    # check if the query param is a string of numbers, then it is a PMID
+    elif query_param.isdigit():
+        url = f"{base_url}works/pmid:{query_param}"
+    else:
         url = f"{base_url}works?"
-        filter = f"title.search:{identifyer}"
-    elif identifyer_type.lower() == 'pmid':
-        url = f"{base_url}works/pmid:{identifyer}"
-    elif identifyer_type.lower() == 'doi':
-        if identifyer.startswith("https://doi.org/"):
-            url = f"{base_url}works/{identifyer}"
-        elif identifyer.startswith("doi.org/"):
-            url = f"{base_url}works/https://{identifyer}"
-        elif re.match(doi_regex, identifyer):
-            url = f"{base_url}works/https://doi.org/{identifyer}"
+        filter = f"title.search:{query_param}"
+        
 
     # Set the query parameters
     params = {
@@ -682,7 +680,7 @@ def query_openalex_api(identifyer: str, identifyer_type: str="title") -> str:
 
     raw_search_results = response.json()
 
-    if identifyer_type.lower() == "title":
+    if filter:
         number_of_search_matches = raw_search_results['meta']['count']
         if len(raw_search_results['results']) == 0:
             return "No results found for the provided title."
@@ -694,27 +692,23 @@ def query_openalex_api(identifyer: str, identifyer_type: str="title") -> str:
                 formatted_results.append(result)
             return json.dumps(formatted_results, indent=2)
 
-    elif identifyer_type.lower() == "pmid":
-        if len(raw_search_results) == 0:
-            return {"search result": "None"}
-        else:
-            return json.dumps(raw_search_results, indent=2)
     
-    elif identifyer_type.lower() == "doi":
+    if len(raw_search_results) == 0:
+        return {"search result": "None"}
+    else:
         return json.dumps(raw_search_results, indent=2)
 
-# %% ../nbs/01_core.ipynb 90
+# %% ../nbs/01_core.ipynb 94
 assert type(query_openalex_api.json_schema) == dict
 assert query_openalex_api.json_schema['function']['name'] == "query_openalex_api"
-assert 'identifyer' in query_openalex_api.json_schema['function']['parameters']['properties'].keys()
-assert 'identifyer_type' in query_openalex_api.json_schema['function']['parameters']['properties'].keys()
+assert 'query_param' in query_openalex_api.json_schema['function']['parameters']['properties'].keys()
 
-# %% ../nbs/01_core.ipynb 103
+# %% ../nbs/01_core.ipynb 107
 import time
 import re
 
 
-# %% ../nbs/01_core.ipynb 104
+# %% ../nbs/01_core.ipynb 108
 @json_schema_decorator
 def query_semantic_scholar_api(identifyer: str, identifyer_type: str = "title") -> str:
     """
@@ -782,13 +776,13 @@ def query_semantic_scholar_api(identifyer: str, identifyer_type: str = "title") 
     else:
         return f"Error: Failed to query Semantic Scholar API. Status code: {response.status_code}"
 
-# %% ../nbs/01_core.ipynb 106
+# %% ../nbs/01_core.ipynb 110
 assert type(query_semantic_scholar_api.json_schema) == dict
 assert query_semantic_scholar_api.json_schema['function']['name'] == "query_semantic_scholar_api"
 assert 'identifyer' in query_semantic_scholar_api.json_schema['function']['parameters']['properties'].keys()
 assert 'identifyer_type' in query_semantic_scholar_api.json_schema['function']['parameters']['properties'].keys()
 
-# %% ../nbs/01_core.ipynb 108
+# %% ../nbs/01_core.ipynb 112
 import json
 from unittest.mock import patch
 
@@ -841,7 +835,7 @@ def test_query_semantic_scholar_api():
 test_query_semantic_scholar_api()
 
 
-# %% ../nbs/01_core.ipynb 113
+# %% ../nbs/01_core.ipynb 117
 @json_schema_decorator
 def respond_to_generic_queries() -> str:
     """
@@ -853,15 +847,15 @@ def respond_to_generic_queries() -> str:
 
     return "There is no specific tool available to respond this query from the user. State your capabilities based the system message or provide a response based on the conversation history."
 
-# %% ../nbs/01_core.ipynb 114
+# %% ../nbs/01_core.ipynb 118
 assert type(respond_to_generic_queries.json_schema) == dict
 assert respond_to_generic_queries.json_schema['function']['name'] == "respond_to_generic_queries"
 assert type(respond_to_generic_queries()) == str
 
-# %% ../nbs/01_core.ipynb 116
+# %% ../nbs/01_core.ipynb 120
 from typing import Generator
 
-# %% ../nbs/01_core.ipynb 117
+# %% ../nbs/01_core.ipynb 121
 def show_response(response: Dict[str, Any] or Generator[Dict[str, Any], None, None]) -> None:
     """
     Print the response from the LLM in a human-readable format.
@@ -893,11 +887,11 @@ def show_response(response: Dict[str, Any] or Generator[Dict[str, Any], None, No
     else:
         raise ValueError(f"\n{RED}nvalid response type. Must be a dictionary or a generator.{RESET}")
 
-# %% ../nbs/01_core.ipynb 119
+# %% ../nbs/01_core.ipynb 123
 import ollama
 from typing import Dict, Any, List
 
-# %% ../nbs/01_core.ipynb 120
+# %% ../nbs/01_core.ipynb 124
 class Assistant:
     def __init__(self,
         sys_message: str or None = None, # The system message for the assistant; if not provided, a default message is used
@@ -1090,14 +1084,14 @@ class Assistant:
         return None
 
 
-# %% ../nbs/01_core.ipynb 122
+# %% ../nbs/01_core.ipynb 126
 def add_to_class(Class: type):
     """Register functions as methods in a class that has already been defined."""
     def wrapper(obj):
         setattr(Class, obj.__name__, obj)
     return wrapper
 
-# %% ../nbs/01_core.ipynb 123
+# %% ../nbs/01_core.ipynb 127
 @add_to_class(Assistant)
 def show_conversion_history(self):
     """Display the conversation history."""
@@ -1126,7 +1120,7 @@ def show_conversion_history(self):
                 for fn_return in message['content']:
                     print(f"{BOLD}{GREY}Function return:{RESET} {GREY}{fn_return}{RESET}\n")
 
-# %% ../nbs/01_core.ipynb 124
+# %% ../nbs/01_core.ipynb 128
 @add_to_class(Assistant)
 def clear_conversion_history(self):
     """Clear the conversation history."""
