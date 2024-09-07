@@ -11,30 +11,28 @@
 
 ## Installation
 
-1.  Go to [Download Ollama](https://ollama.com/download) and follow the
-    instructions to download and install Ollama for your operating
-    system. Then, pull and run
-    [llama3.1](https://ollama.com/library/llama3.1) (parameters: 8B,
-    quantization: Q4_0, size: 4.7 GB) according to the ollama
-    documentation.
+**Step 1.** [Download Ollama](https://ollama.com/download) and follow
+the instructions to install Ollama for your operating system. Then, pull
+and run [llama3.1](https://ollama.com/library/llama3.1) (parameters: 8B,
+quantization: Q4_0, size: 4.7 GB) according to the ollama documentation.
 
-2.  Setup a new virtual environment, such as with Conda. Quick command
-    line instructions on how to install Miniconda, a free minimal
-    installer for Conda, can be found
-    [here](https://docs.anaconda.com/free/miniconda/#quick-command-line-install).
+**Step 2.** Setup a new virtual environment, such as with Conda. Quick
+command line instructions on how to install Miniconda, a free minimal
+installer for Conda, can be found
+[here](https://docs.anaconda.com/free/miniconda/#quick-command-line-install).
 
 ``` sh
 $ conda create -n scholaris-env python=3.12
 ```
 
-3.  Activate the virtual environment:
+**Step 3.** Activate the virtual environment:
 
 ``` sh
 $ conda activate scholaris-env
 ```
 
-4.  Install latest scholaris Python package from the GitHub
-    [repository](https://github.com/nicomarr/scholaris):
+**Step 4.** Install latest scholaris Python package from the GitHub
+[repository](https://github.com/nicomarr/scholaris):
 
 ``` sh
 $ pip install git+https://github.com/nicomarr/scholaris.git
@@ -46,7 +44,7 @@ or from [pypi](https://pypi.org/project/scholaris/):
 $ pip install scholaris
 ```
 
-5.  Install the following dependencies:
+**Step 5.** Install the following dependencies:
 
 ``` sh
 $ pip install ollama
@@ -57,10 +55,12 @@ $ pip install tqdm
 
 ## Getting started
 
-Import the scholaris core module and its dependencies:
+Import the scholaris core module. If you work from a Jupyter notebook
+environment within a different directory, you may need to add the parent
+directory of the current working directory to the Python system path as
+shown below.
 
 ``` python
-import ollama
 import sys
 import os
 sys.path.append(os.path.dirname(os.getcwd())) # To add the parent directory to the path
@@ -105,12 +105,12 @@ assistant = Assistant()
 > ```
 
 You can also explicitly set the model by passing the model name as an
-argument to the Assistant class. If you do not pass a model name, the
-default model is Llama 3.1 8B. An alternative model that supports tool
-calling and can be run on a standard laptop is Mistral’s NeMo 12 B
-model. To use the latter model, change attribute in the Assistant class
-to “mistral-nemo”. For more information, read the following [blog
-post](https://ollama.com/blog/tool-support).
+argument to the `Assistant` class. If you do not pass a model name, the
+default model is ***Llama 3.1*** 8B. An alternative model that supports
+tool calling and can be run on a standard laptop is Mistral’s ***NeMo***
+12 B model. To use the latter model, change the attribute in the
+`Assistant` class to “mistral-nemo”. For more information, read the
+following [blog post](https://ollama.com/blog/tool-support).
 
 ``` python
 assistant = Assistant(model="llama3.1:latest")
@@ -307,7 +307,7 @@ print(assistant.sys_message)
 ## Local data access
 
 By default, the assistant has access to a single directory, called
-`data`. Within this directory, the assitant can list and read the
+`data`. Within this directory, the assistant can list and read the
 following file formats and extensions: pdf, txt, md, markdown, csv, and
 py. If not already present, the directory is created when the assistant
 is initialized. If you want to change the directory name, you can do so
