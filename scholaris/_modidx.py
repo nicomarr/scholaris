@@ -34,6 +34,4 @@ d = { 'settings': { 'branch': 'main',
                                 'scholaris.core.respond_to_generic_queries': ('core.html#respond_to_generic_queries', 'scholaris/core.py'),
                                 'scholaris.core.show_conversion_history': ('core.html#show_conversion_history', 'scholaris/core.py'),
                                 'scholaris.core.show_response': ('core.html#show_response', 'scholaris/core.py'),
-                                'scholaris.core.summarize_local_document': ('core.html#summarize_local_document', 'scholaris/core.py'),
-                                'scholaris.core.test_query_semantic_scholar_api': ( 'core.html#test_query_semantic_scholar_api',
-                                                                                    'scholaris/core.py')}}}
+                                'scholaris.core.summarize_local_document': ('core.html#summarize_local_document', 'scholaris/core.py')}}}

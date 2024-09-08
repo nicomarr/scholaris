@@ -61,19 +61,17 @@ directory of the current working directory to the Python system path as
 shown below.
 
 ``` python
-import sys
-import os
-sys.path.append(os.path.dirname(os.getcwd())) # To add the parent directory to the path
 from scholaris.core import *
 ```
 
 Make sure the Ollama app is installed on your local computer and Llama
 3.1 8B has been downloaded and is running. Then, initialize the
-`Assistant` class with Llama 3.1 8B, the core functions and default
-system message. During initialization, messages are printed to indicate
-whether credentials such as API keys and email are loaded from the
-environment variables (more on that below), and whether a local data
-directory already exists or has been created, like so:
+[`Assistant`](https://nicomarr.github.io/scholaris/core.html#assistant)
+class with Llama 3.1 8B, the core functions and default system message.
+During initialization, messages are printed to indicate whether
+credentials such as API keys and email are loaded from the environment
+variables (more on that below), and whether a local data directory
+already exists or has been created, like so:
 
 ``` python
 assistant = Assistant()
@@ -105,12 +103,15 @@ assistant = Assistant()
 > ```
 
 You can also explicitly set the model by passing the model name as an
-argument to the `Assistant` class. If you do not pass a model name, the
-default model is ***Llama 3.1*** 8B. An alternative model that supports
-tool calling and can be run on a standard laptop is Mistral’s ***NeMo***
-12 B model. To use the latter model, change the attribute in the
-`Assistant` class to “mistral-nemo”. For more information, read the
-following [blog post](https://ollama.com/blog/tool-support).
+argument to the
+[`Assistant`](https://nicomarr.github.io/scholaris/core.html#assistant)
+class. If you do not pass a model name, the default model is ***Llama
+3.1*** 8B. An alternative model that supports tool calling and can be
+run on a standard laptop is Mistral’s ***NeMo*** 12 B model. To use the
+latter model, change the attribute in the
+[`Assistant`](https://nicomarr.github.io/scholaris/core.html#assistant)
+class to “mistral-nemo”. For more information, read the following [blog
+post](https://ollama.com/blog/tool-support).
 
 ``` python
 assistant = Assistant(model="llama3.1:latest")
@@ -131,9 +132,7 @@ assistant.chat("Which pdf files do you have access to on the local computer?")
 
 
 
-    I have access to 1 PDF file on the local computer:
-
-    * jci.insight.144499.v2.pdf
+    I can provide information from a single PDF file named `jci.insight.144499.v2.pdf`. Would you like me to help with anything specific within that document?
 
 By setting `show_progress=True`, you can see the step-by-step progress
 of the fuction calling. This includes the tool choice, selected
@@ -141,7 +140,7 @@ arguments, if applicable, and the output of the called function that is
 being passed back to the LLM to generate the final response.
 
 ``` python
-assistant.chat("Get the title of this PDF file.", show_progress=True)
+assistant.chat("Does this document have a title?", show_progress=True)
 ```
 
     Selecting tools...
@@ -151,34 +150,23 @@ assistant.chat("Get the title of this PDF file.", show_progress=True)
 
 
 
-    Function response:
-    [
-      {
-        "title": "Distinct antibody repertoires against endemic human coronaviruses in children and adults",
-        "first_author": "Taushif Khan",
-        "file_name": "jci.insight.144499.v2.pdf"
-      }
-    ]
-
     Generating final response...
 
 
-    The title of the PDF file is:
+    The document `jci.insight.144499.v2.pdf` has a title: "Distinct antibody repertoires against endemic human coronaviruses in children and adults". Would you like me to provide more information about this article?
 
-    "Distinct antibody repertoires against endemic human coronaviruses in children and adults"
-
-    Extracting titles and first authors: 100%|██████████| 1/1 [00:07<00:00,  7.69s/it]
+    Extracting titles and first authors: 100%|██████████| 1/1 [00:01<00:00,  1.97s/it]
 
 To get information about a research article from external sources,
 simply ask the assistant:
 
 ``` python
-assistant.chat("Get the number of citations for the study entitled 'Tuberculosis and impaired IL-23–dependent IFN-γ immunity in humans homozygous for a common TYK2 missense variant.'")
+assistant.chat("No thanks. Can you provide the corresponding PMID for another article with the DOI 10.1126/science.adh4059?")
 ```
 
 
 
-    The study entitled 'Tuberculosis and impaired IL-23–dependent IFN-γ immunity in humans homozygous for a common TYK2 missense variant' has been cited 161 times.
+    The PMID corresponding to the DOI `10.1126/science.adh4059` is `38422122`.
 
 ## Conversation history
 
@@ -191,70 +179,27 @@ assistant.show_conversion_history()
 
     User: Which pdf files do you have access to on the local computer?
 
-    Assistant function calls: get_file_names() with arguments {'ext': 'pdf'}
+    Assistant response: I can provide information from a single PDF file named `jci.insight.144499.v2.pdf`. Would you like me to help with anything specific within that document?
 
-    Function return: List of file names with the specified extensions in the local data directory: jci.insight.144499.v2.pdf
+    User: Does this document have a title?
 
-    Assistant response: I have access to 1 PDF file on the local computer:
+    Assistant response: The document `jci.insight.144499.v2.pdf` has a title: "Distinct antibody repertoires against endemic human coronaviruses in children and adults". Would you like me to provide more information about this article?
 
-    * jci.insight.144499.v2.pdf
+    User: No thanks. Can you provide the corresponding PMID for another article with the DOI 10.1126/science.adh4059?
 
-    User: Get the title of this PDF file.
+    Assistant response: The PMID corresponding to the DOI `10.1126/science.adh4059` is `38422122`.
 
-    Assistant function calls: get_titles_and_first_authors() with arguments {}
-
-    Function return: [
-      {
-        "title": "Distinct antibody repertoires against endemic human coronaviruses in children and adults",
-        "first_author": "Taushif Khan",
-        "file_name": "jci.insight.144499.v2.pdf"
-      }
-    ]
-
-    Assistant response: The title of the PDF file is:
-
-    "Distinct antibody repertoires against endemic human coronaviruses in children and adults"
-
-    User: Get the number of citations for the study entitled 'Tuberculosis and impaired IL-23–dependent IFN-γ immunity in humans homozygous for a common TYK2 missense variant.'
-
-    Assistant function calls: query_openalex_api() with arguments {'identifyer': 'Tuberculosis and impaired IL-23–dependent IFN-γ immunity in humans homozygous for a common TYK2 missense variant.', 'identifyer_type': 'title'}
-
-    Function return: [
-      {
-        "id": "https://openalex.org/W2906653622",
-        "doi": "https://doi.org/10.1126/sciimmunol.aau8714",
-        "title": "Tuberculosis and impaired IL-23\u2013dependent IFN-\u03b3 immunity in humans homozygous for a common <i>TYK2</i> missense variant",
-        "publication_year": 2018,
-        "cited_by_count": 161,
-        "cited_by_api_url": "https://api.openalex.org/works?filter=cites:W2906653622",
-        "open_access": {
-          "is_oa": true,
-          "oa_status": "bronze",
-          "oa_url": "https://immunology.sciencemag.org/content/immunology/3/30/eaau8714.full.pdf",
-          "any_repository_has_fulltext": true
-        },
-        "type": "article",
-        "type_crossref": "journal-article"
-      },
-      {
-        "id": "https://openalex.org/W4249745515",
-        "doi": "https://doi.org/10.3410/f.734676937.793572033",
-        "title": "Faculty Opinions recommendation of Tuberculosis and impaired IL-23-dependent IFN-\u03b3 immunity in humans homozygous for a common TYK2 missense variant.",
-        "publication_year": 2020,
-        "cited_by_count": 0,
-        "cited_by_api_url": "https://api.openalex.org/works?filter=cites:W4249745515",
-        "open_access": {
-          "is_oa": true,
-          "oa_status": "bronze",
-          "oa_url": "https://facultyopinions.com/download/734676937",
-          "any_repository_has_fulltext": true
-        },
-        "type": "dataset",
-        "type_crossref": "dataset"
-      }
-    ]
-
-    Assistant response: The study entitled 'Tuberculosis and impaired IL-23–dependent IFN-γ immunity in humans homozygous for a common TYK2 missense variant' has been cited 161 times.
+> [!NOTE]
+>
+> The `show_conversation_history()` method can be called with the
+> `show_function_calls=True` argument to display the function calls made
+> by the assistant during the conversation, and the output of the
+> function calls. This can be useful for understanding the assistant’s
+> responses, and for debugging purposes.
+>
+> ``` python
+> assistant.show_conversion_history(show_function_calls=True)
+> ```
 
 Clear the conversation history by calling the assistant’s
 `clear_conversation_history()` method:
@@ -311,7 +256,8 @@ By default, the assistant has access to a single directory, called
 following file formats and extensions: pdf, txt, md, markdown, csv, and
 py. If not already present, the directory is created when the assistant
 is initialized. If you want to change the directory name, you can do so
-by passing the desired directory name as an argument to the `Assistant`
+by passing the desired directory name as an argument to the
+[`Assistant`](https://nicomarr.github.io/scholaris/core.html#assistant)
 class when it is initialized. For example, to create a directory called
 `proprietary_data`, you would initialize the assistant as follows:
 
@@ -321,17 +267,18 @@ assistant = Assistant(dir_path="../proprietary_data")
 
     Loaded Semantic Scholar API key from the environment variables.
     Loaded email address from the environment variables.
-    Created directory ../proprietary_data for storing data files.
+    A local directory ../proprietary_data already exists for storing data files. No of files: 0
 
 ## Tools
 
 By default, the assistant can call a set of core tools or functions
-which are passed to the `Assistant` as a dictionary when it is
-initialized. With these tools or functions, the assistant will be able
-to get a list of file names in a specific data directory, can extract
-content from these files, and summarize them. In addition, the assistant
-can make API calls to external data sources, such as
-[OpenAlex](https://openalex.org) or [Semantic
+which are passed to the
+[`Assistant`](https://nicomarr.github.io/scholaris/core.html#assistant)
+as a dictionary when it is initialized. With these tools or functions,
+the assistant will be able to get a list of file names in a specific
+data directory, can extract content from these files, and summarize
+them. In addition, the assistant can make API calls to external data
+sources, such as [OpenAlex](https://openalex.org) or [Semantic
 Scholar](https://www.semanticscholar.org), to retrieve information about
 a large number of scholarly articles. The tools available to the
 assistant can be viewed by accessing the assistant’s `list_tools()`
@@ -346,9 +293,11 @@ assistant.list_tools()
     get_titles_and_first_authors
     summarize_local_document
     describe_python_code
+    id_converter_tool
     query_openalex_api
     query_semantic_scholar_api
     respond_to_generic_queries
+    describe_tools
 
 > [!TIP]
 >
@@ -501,7 +450,9 @@ multiply_two_integers.json_schema
         'b': {'type': 'integer', 'description': 'Second integer.'}},
        'required': ['a', 'b']}}}
 
-Alternatively, you can use the `generate_json_schema` function:
+Alternatively, you can use the
+[`generate_json_schema`](https://nicomarr.github.io/scholaris/core.html#generate_json_schema)
+function:
 
 ``` python
 generate_json_schema(multiply_two_integers)
@@ -518,11 +469,11 @@ generate_json_schema(multiply_two_integers)
 ### Adding tools
 
 You can add new tools by passing a dictionary of new tools to the
-`Assistant` class when it is initialized. Use the `add_tools` argument
-to add new tools to the assistant. This will merge the new tools with
-the existing tools. For example, to add the new tool called
-`multiply_two_integers` to the assistant, you would initialize the
-assistant as follows:
+[`Assistant`](https://nicomarr.github.io/scholaris/core.html#assistant)
+class when it is initialized. Use the `add_tools` argument to add new
+tools to the assistant. This will merge the new tools with the existing
+tools. For example, to add the new tool called `multiply_two_integers`
+to the assistant, you would initialize the assistant as follows:
 
 ``` python
 assistant = Assistant(add_tools = {"multiply_two_integers": multiply_two_integers})
@@ -544,9 +495,11 @@ assistant.list_tools()
     get_titles_and_first_authors
     summarize_local_document
     describe_python_code
+    id_converter_tool
     query_openalex_api
     query_semantic_scholar_api
     respond_to_generic_queries
+    describe_tools
     multiply_two_integers
 
 ``` python
@@ -558,20 +511,20 @@ assistant.chat("What is the product of 4173 and 351?", show_progress=True)
     [{'function': {'name': 'multiply_two_integers', 'arguments': {'a': 4173, 'b': 351}}}]
     Calling multiply_two_integers() with arguments {'a': 4173, 'b': 351}...
 
-    Function response:
-    1464723
-
     Generating final response...
 
 
-    The product of 4173 and 351 is 1,464,723.
+    The result of multiplying 4173 by 351 is 1,464,723.
 
 ### Adding methods
 
-You can add new methods to the `Assistant` class by using the
-`add_to_class()` decorator function. For example, the
-`clear_conversion_history` method was added to the `Assistant` class as
-follows:
+You can add new methods to the
+[`Assistant`](https://nicomarr.github.io/scholaris/core.html#assistant)
+class by using the `add_to_class()` decorator function. For example, the
+[`clear_conversion_history`](https://nicomarr.github.io/scholaris/core.html#clear_conversion_history)
+method was added to the
+[`Assistant`](https://nicomarr.github.io/scholaris/core.html#assistant)
+class as follows:
 
 ``` python
 @add_to_class(Assistant)
