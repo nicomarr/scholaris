@@ -3,21 +3,21 @@
 # %% auto 0
 __all__ = ['T', 'mock_success_response', 'generate_json_schema', 'json_schema_decorator', 'get_file_names',
            'extract_text_from_pdf', 'extract_title_and_first_author', 'get_titles_and_first_authors',
-           'summarize_local_document', 'describe_python_code', 'query_openalex_api', 'query_semantic_scholar_api',
-           'test_query_semantic_scholar_api', 'respond_to_generic_queries', 'show_response', 'Assistant',
-           'add_to_class', 'show_conversion_history', 'clear_conversion_history']
+           'summarize_local_document', 'describe_python_code', 'convert_id', 'detect_id_type', 'id_converter_tool',
+           'query_openalex_api', 'query_semantic_scholar_api', 'test_query_semantic_scholar_api',
+           'respond_to_generic_queries', 'show_response', 'Assistant', 'add_to_class', 'show_conversion_history',
+           'clear_conversion_history', 'pprint_tools']
 
-# %% ../nbs/01_core.ipynb 5
-import ollama
-
-# %% ../nbs/01_core.ipynb 31
+# %% ../nbs/01_core.ipynb 30
 import inspect
 from typing import Callable, Dict, List, Tuple, Optional, Any, Union 
 import json
 import os
+import random
+import ollama
 
 
-# %% ../nbs/01_core.ipynb 32
+# %% ../nbs/01_core.ipynb 31
 def generate_json_schema(func: Callable) -> Dict[str, Any]:
     """
     Generate a JSON schema for the given function based on its annotations and docstring.
@@ -100,11 +100,11 @@ def _get_type(arg_type):
     else:
         return "object"
 
-# %% ../nbs/01_core.ipynb 33
+# %% ../nbs/01_core.ipynb 32
 import functools
 from typing import TypeVar
 
-# %% ../nbs/01_core.ipynb 34
+# %% ../nbs/01_core.ipynb 33
 T = TypeVar('T', bound=Callable)
 
 def json_schema_decorator(func: T) -> T:
@@ -125,7 +125,7 @@ def json_schema_decorator(func: T) -> T:
     wrapper.json_schema = schema  # Attach the schema dictionary directly
     return wrapper
 
-# %% ../nbs/01_core.ipynb 45
+# %% ../nbs/01_core.ipynb 44
 @json_schema_decorator
 def get_file_names(ext: str = "pdf, txt") -> str:
     """Retrieves a list of file names with specified extensions in a local data directory the assistant has access to on the user's computer.
@@ -169,15 +169,15 @@ def get_file_names(ext: str = "pdf, txt") -> str:
     # Convert list to a comma-separated string. This is because the object is returned to the LLM and the API accepts str only
     return f"List of file names with the specified extensions in the local data directory: {file_names_json}"
 
-# %% ../nbs/01_core.ipynb 46
+# %% ../nbs/01_core.ipynb 45
 assert type(get_file_names.json_schema) == dict
 assert get_file_names.json_schema['function']['name'] == "get_file_names"
 
-# %% ../nbs/01_core.ipynb 57
+# %% ../nbs/01_core.ipynb 56
 import PyPDF2
 
 
-# %% ../nbs/01_core.ipynb 58
+# %% ../nbs/01_core.ipynb 57
 @json_schema_decorator
 def extract_text_from_pdf(file_name: str, page_range: Optional[str] = None) -> str:
     """A function that extracts text from a PDF file.
@@ -269,11 +269,11 @@ def extract_text_from_pdf(file_name: str, page_range: Optional[str] = None) -> s
 
     return text
 
-# %% ../nbs/01_core.ipynb 61
+# %% ../nbs/01_core.ipynb 60
 from tqdm import tqdm
 
 
-# %% ../nbs/01_core.ipynb 62
+# %% ../nbs/01_core.ipynb 61
 def extract_title_and_first_author(contents: List[Dict[str, str]], model: str='llama3.1', verbose: Optional[bool] = False, show_progress: Optional[bool] = False) -> List[Dict[str, str]]:
     """
     A function that extracts the titles and the first author's names from the text of one or more research articles.
@@ -353,7 +353,7 @@ def extract_title_and_first_author(contents: List[Dict[str, str]], model: str='l
     print("\n") if show_progress else None # Add a newline if showing progress bar
     return contents
 
-# %% ../nbs/01_core.ipynb 70
+# %% ../nbs/01_core.ipynb 69
 @json_schema_decorator
 def get_titles_and_first_authors() -> str:
     """
@@ -403,11 +403,11 @@ def get_titles_and_first_authors() -> str:
         
     return json.dumps(titles_and_authors, indent=2) # Return as a JSON-formatted string
 
-# %% ../nbs/01_core.ipynb 72
+# %% ../nbs/01_core.ipynb 71
 assert type(get_titles_and_first_authors.json_schema) == dict
 assert get_titles_and_first_authors.json_schema['function']['name'] == "get_titles_and_first_authors"
 
-# %% ../nbs/01_core.ipynb 74
+# %% ../nbs/01_core.ipynb 73
 @json_schema_decorator
 def summarize_local_document(file_name: str, ext: str = "pdf") -> str:
     """Summarize the content of a single PDF, markdown, or text document from the local data directory.
@@ -462,6 +462,13 @@ def summarize_local_document(file_name: str, ext: str = "pdf") -> str:
             return f"Error while reading the file {file_name}: {e}"
     # print(full_text[:500]) # Uncomment for debugging
 
+    # Remove references section from the full text content, if present
+    patterns = ["References", "REFERENCES", "references", "Bibliography", "BIBLIOGRAPHY", "bibliography"]
+    for pattern in patterns:
+        if pattern in full_text:
+            full_text = full_text.split(pattern)[0]
+            break
+
     # Summarize the full text content of the document
     prompt = f"""
     The text below is the full text content from single document with the file name '{file_name}'.
@@ -508,13 +515,13 @@ def summarize_local_document(file_name: str, ext: str = "pdf") -> str:
     except Exception as e:
         return f"Error while summarizing the content of the document '{file_name}': {e}" 
 
-# %% ../nbs/01_core.ipynb 76
+# %% ../nbs/01_core.ipynb 75
 assert type(summarize_local_document.json_schema) == dict
 assert summarize_local_document.json_schema['function']['name'] == "summarize_local_document"
 assert 'file_name' in summarize_local_document.json_schema['function']['parameters']['properties'].keys()
 assert 'ext' in summarize_local_document.json_schema['function']['parameters']['properties'].keys()
 
-# %% ../nbs/01_core.ipynb 80
+# %% ../nbs/01_core.ipynb 79
 @json_schema_decorator
 def describe_python_code(file_name: str) -> str:
     """Describe the purpose of the Python code in a local Python file.
@@ -595,22 +602,140 @@ def describe_python_code(file_name: str) -> str:
     except Exception as e:
         return f"Error while describing the Python code in the file '{file_name}': {e}"
 
-# %% ../nbs/01_core.ipynb 82
+# %% ../nbs/01_core.ipynb 81
 assert type(describe_python_code.json_schema) == dict
 assert describe_python_code.json_schema['function']['name'] == "describe_python_code"
 assert 'file_name' in describe_python_code.json_schema['function']['parameters']['properties'].keys()
 
-# %% ../nbs/01_core.ipynb 87
-import requests
+# %% ../nbs/01_core.ipynb 86
 import re
+import requests
+
+# %% ../nbs/01_core.ipynb 87
+def convert_id(ids: List[str]) -> str:
+    """
+    For any article(s) in PubMed Central, find all the corresponding PubMed IDs (PMIDs), digital object identifiers (DOIs), and manuscript IDs (MIDs).
+    
+    Args:
+    ids (List[str]): A list of IDs to convert (max 200 per request).
+    
+    Returns:
+    Str: A JSON-formatted string containing the conversion results.
+    """
+    
+    if 'EMAIL' in globals():
+        email = EMAIL
+    else:
+        try:
+            email = os.environ['EMAIL']
+        except KeyError:
+            return {"error": "Please provide an email address"}
+
+    # API endpoint
+    base_url = "https://www.ncbi.nlm.nih.gov/pmc/utils/idconv/v1.0/"
+    
+    # Prepare the IDs string
+    ids_string = ",".join(ids)
+    
+    # Prepare the parameters
+    params = {
+        "tool": "scholaris",
+        "email": email,
+        "ids": ids_string,
+        "format": "json"
+    }
+    
+    try:
+        # Make the API request
+        response = requests.get(base_url, params=params)
+        response.raise_for_status()  # Raise an exception for bad status codes
+        
+        return response.json()
+    
+    except requests.exceptions.RequestException as e:
+        return {"error": str(e)}
+
+def detect_id_type(id_string: str) -> str:
+    """
+    Detect the type of the given ID or title.
+    
+    Args:
+    id_string (str): The ID or title to detect.
+    
+    Returns:
+    str: The detected type ('pmid', 'pmcid', 'doi', 'openalex', 'semantic_scholar', 'potential_title', or 'unknown').
+    """
+    if re.match(r'^\d{1,8}$', id_string):
+        return 'pmid'
+    elif re.match(r'^PMC\d+$', id_string):
+        return 'pmcid'
+    elif re.match(r'^10\.\d{4,9}/[-._;()/:A-Z0-9]+$', id_string, re.I): # Detect DOIs, case-insensitive
+        return 'doi'
+    elif re.match(r'^[WAIC]\d{2,}$', id_string):
+        return 'openalex'
+    elif re.match(r'^[0-9a-f]{40}$', id_string): 
+        return 'semantic_scholar'
+    elif re.match(r'^[A-Z][\w\s:,\-()]{10,150}[.?!]?$', id_string, re.I): # A simple heuristic for detecting titles
+        return 'potential_title'
+    else:
+        return 'unknown'
 
 
-# %% ../nbs/01_core.ipynb 92
+@json_schema_decorator
+def id_converter_tool(ids: List[str]) -> str:
+    """
+    For any article(s) in PubMed Central, find all the corresponding PubMed IDs (PMIDs), digital object identifiers (DOIs), and manuscript IDs (MIDs).
+    Use this tool to convert a list of IDs, such as PMIDs, PMCIDs, or DOIs, and find the corresponding IDs for the same articles.
+    
+    Args:
+    ids (str): A string with a comma-separated list of IDs to convert. Must be PMIDs, PMCIDs, or DOIs. The maximum number of IDs per request is 200.
+    
+    Returns:
+    str: A JSON-formatted string containing the conversion results and the detected ID types.
+    """
+
+    if isinstance(ids, str):
+        ids = ids.replace("https://doi.org/", "").replace("doi.org/", "") # Remove DOI URL prefixes, if present
+    
+    # Convert the input string to a list of IDs
+    try:
+        ids = ids.split(",")
+    except AttributeError:
+        return json.dumps({"error": "Input must be a string of comma-separated IDs"})
+
+    if len(ids) > 200:
+        return json.dumps({"error": "Input IDs must be no more than 200"})
+    
+    # Detect ID types
+    id_types = [detect_id_type(id_string) for id_string in ids]
+    
+    # Convert IDs
+    conversion_result = convert_id(ids)
+    
+    # Check if conversion_result is already a dictionary (error case)
+    if isinstance(conversion_result, dict):
+        parsed_result = conversion_result
+    else:
+        # Parse the JSON string result
+        try:
+            parsed_result = json.loads(conversion_result)
+        except json.JSONDecodeError:
+            return json.dumps({"error": "Failed to parse conversion result"})
+    
+    # Prepare the result
+    result = {
+        "conversion_result": parsed_result,
+        "detected_id_types": dict(zip(ids, id_types))
+    }
+    
+    return json.dumps(result, indent=2)
+
+# %% ../nbs/01_core.ipynb 99
 @json_schema_decorator
 def query_openalex_api(query_param: str) -> str:
     """
     Retrieve metadata for a given article from OpenAlex, a comprehensive open-access catalog of global research papers.
-    Use this tool to search the OpenAlex API by title, the PubMed ID, or the digital object identifier (DOI) of an article as the query parameter. 
+    Use this tool to search the OpenAlex API by using the article title, the PubMed ID (PMID), the PubMed Central ID (PMCID) or the digital object identifier (DOI) of an article as the query parameter. 
     This tool returns the following metadata:
     - the OpenAlex ID
     - the digital object identifier (DOI) URL
@@ -623,7 +748,7 @@ def query_openalex_api(query_param: str) -> str:
     Use this tool only if an article title, PubMed ID or DOI is provided by the user or was extracted from a local PDF file and is present in the conversation history.
     
     Args:
-        query_param (str): The title, PubMed ID, or DOI of the article to retrieve metadata for. May be provided by the user or extracted from a local PDF file and present in the conversation history.
+        query_param (str): The article title, the PubMed ID (PMID), the PubMed Central ID (PMCID) or the digital object identifier (DOI) of the article to retrieve metadata for. May be provided by the user or extracted from a local PDF file and present in the conversation history.
 
     Returns:
         str: A JSON-formatted string including the search results from the OpenAlex database. If no results are found or the API query fails, an appropriate message is returned.
@@ -648,21 +773,22 @@ def query_openalex_api(query_param: str) -> str:
 
     # Constants
     base_url = "https://api.openalex.org/" # Define the base URL for the OpenAlex API
-    doi_regex = r"10.\d{1,9}/[-._;()/:A-Za-z0-9]+" # Regular expression to match DOIs
     
     # Initialize variables
     filter = ""
 
-    if re.match(doi_regex, query_param):
-        url = f"{base_url}works/https://doi.org/{query_param}"
-    # check if the query param is a string of numbers, then it is a PMID
-    elif query_param.isdigit():
-        url = f"{base_url}works/pmid:{query_param}"
-    else:
+    if detect_id_type(query_param) == "potential_title":
         url = f"{base_url}works?"
         filter = f"title.search:{query_param}"
+    elif detect_id_type(query_param) == "pmid":
+        url = f"{base_url}works/pmid:{query_param}"
+    elif detect_id_type(query_param) == "doi":
+        url = f"{base_url}works/https://doi.org/{query_param}"
+    elif detect_id_type(query_param) == "pmcid":
+        url = f"{base_url}works/pmcid:{query_param}"
+    else:
+        return json.dumps({"error": "The query parameter must be a valid title, PMID, PMCID, or DOI."})
         
-
     # Set the query parameters
     params = {
         "mailto": EMAIL,
@@ -698,22 +824,22 @@ def query_openalex_api(query_param: str) -> str:
     else:
         return json.dumps(raw_search_results, indent=2)
 
-# %% ../nbs/01_core.ipynb 94
+# %% ../nbs/01_core.ipynb 101
 assert type(query_openalex_api.json_schema) == dict
 assert query_openalex_api.json_schema['function']['name'] == "query_openalex_api"
 assert 'query_param' in query_openalex_api.json_schema['function']['parameters']['properties'].keys()
+print("All tests passed!")
 
-# %% ../nbs/01_core.ipynb 107
+# %% ../nbs/01_core.ipynb 114
 import time
 import re
 
-
-# %% ../nbs/01_core.ipynb 108
+# %% ../nbs/01_core.ipynb 118
 @json_schema_decorator
-def query_semantic_scholar_api(identifyer: str, identifyer_type: str = "title") -> str:
+def query_semantic_scholar_api(query_param: str) -> str:
     """
     Retrieve metadata for a given article from the Semantic Scholar Academic Graph (S2AG), a large knowledge graph of scientific literature that combines data from multiple sources.
-    Use this tool to query the Semantic Scholar Graph API by using either the title, the PubMed ID, or the digital object identifier (DOI) to retrieve the following metadata:
+    Use this tool to query the Semantic Scholar Graph API by using either the article title, the PubMed ID, or the digital object identifier (DOI) to retrieve the following metadata:
     - the title
     - the publication year
     - the abstract
@@ -725,23 +851,11 @@ def query_semantic_scholar_api(identifyer: str, identifyer_type: str = "title") 
     Use this tool only if an article title, PubMed ID or DOI is provided by the user or was extracted from a local PDF file and is present in the conversation history.
     
     Args:
-        identifyer (str): The title, PubMed ID, or DOI of the article to retrieve metadata for.
-        identifyter_type (str): The type of identifier to use for the query. Options are: 'title', 'pmid', or 'doi'. Default is 'title'.
+        query_param (str): The article title, the PubMed ID, or the digital object identifier of the article to retrieve metadata for. May be provided by the user or extracted from a local PDF file and present in the conversation history. Do not include the 'https://doi.org/' prefix for DOIs, or keys such as 'DOI', 'PMCID' or 'PMID'. The tool will automatically detect the type of identifier provided.
 
     Returns:
         str: A JSON-formatted string including the search results from the Semantic Scholar database. If no results are found or the API query fails, an appropriate message is returned.
     """
-
-    # Validate the input
-    if not isinstance(identifyer, str) or not identifyer:
-        return json.dumps({"error": "The identifier must be a non-empty string."})
-    if identifyer_type.lower().strip() not in ['title', 'pmid', 'doi']:
-        return json.dumps({"error": "The identifier type must be one of the following: 'title', 'pmid', or 'doi'."})
-
-    # Constants
-    academicgraph_base_url = "https://api.semanticscholar.org/graph/v1"
-    fields = "title,year,authors,tldr,abstract,citationCount,openAccessPdf,journal,url" # The values to retrieve from the API
-    doi_regex = r"10.\d{1,9}/[-._;()/:A-Za-z0-9]+" # Regular expression to match DOIs
 
     # Try to get the API key from the environment variables, if available, and define the headers
     try:
@@ -750,21 +864,42 @@ def query_semantic_scholar_api(identifyer: str, identifyer_type: str = "title") 
         SEMANTIC_SCHOLAR_API_KEY = os.environ.get("SEMANTIC_SCHOLAR_API_KEY")
     headers = {'x-api-key': SEMANTIC_SCHOLAR_API_KEY}
 
+    # Validate the input
+    if query_param is None or query_param == "":
+        return json.dumps({"error": "The query parameter must be a non-empty string."})
+    elif not isinstance(query_param, str):
+        query_param = str(query_param)
+    
+    # Clean the query parameter
+    query_param = query_param.strip().lower() # Convert to lowercase and remove leading/trailing whitespace
+    if query_param.startswith("https://doi.org/"):
+        query_param = query_param.replace("https://doi.org/", "")
+    elif query_param.startswith("doi.org/"):
+        query_param = query_param.replace("doi.org/", "")
+    elif query_param.startswith("doi"):
+        query_param = query_param.replace("doi", "")
+    elif query_param.startswith("pmid"):
+        query_param = query_param.replace("pmid", "")
+    elif query_param.startswith("pmcid"):
+        query_param = query_param.replace("pmcid", "")
+    if detect_id_type(query_param) != "potential_title":
+        query_param = query_param.replace(":", "") # Remove any colons from the query parameter if it is not a title
+        query_param = query_param.replace(" ", "") # Remove spaces from the query parameter if it is not a title
+
+    # Constants
+    academicgraph_base_url = "https://api.semanticscholar.org/graph/v1"
+    fields = "title,year,authors,tldr,abstract,citationCount,openAccessPdf,journal,url" # The values to retrieve from the API
+
+
     # Construct the URL based on the identifier type
-    if identifyer_type.lower() == 'title':
-        url = f"{academicgraph_base_url}/paper/search/match?query={identifyer}&fields={fields}"
+    if detect_id_type(query_param) == "potential_title":
+        url = f"{academicgraph_base_url}/paper/search/match?query={query_param}&fields={fields}"
+    elif detect_id_type(query_param) == "pmid":
+        url = f"{academicgraph_base_url}/paper/PMID:{query_param}?&fields={fields}"
+    elif detect_id_type(query_param) == "doi":
+        url = f"{academicgraph_base_url}/paper/DOI:{query_param}?&fields={fields}"
     else:
-        # Construct resource path when searching by PMID or DOI
-        if identifyer_type.lower() == 'pmid':
-            paper_id = f"PMID:{identifyer}"
-        elif identifyer_type.lower() == 'doi':
-            if identifyer.startswith("https://doi.org/"):
-                paper_id = f"DOI:{identifyer.replace('https://doi.org/', '')}"
-            elif identifyer.startswith("doi.org/"):
-                paper_id = f"DOI:{identifyer.replace('doi.org/', '')}"
-            elif re.match(doi_regex, identifyer):
-                paper_id = f"DOI:{identifyer}"
-        url = f"{academicgraph_base_url}/paper/{paper_id}?&fields={fields}"
+        return json.dumps({"error": "The query parameter must be a valid title, PMID, or DOI."})
     
     response = requests.get(url, headers=headers) # Send the API request
     # print(response.url) # Uncomment for debugging
@@ -776,13 +911,13 @@ def query_semantic_scholar_api(identifyer: str, identifyer_type: str = "title") 
     else:
         return f"Error: Failed to query Semantic Scholar API. Status code: {response.status_code}"
 
-# %% ../nbs/01_core.ipynb 110
+# %% ../nbs/01_core.ipynb 119
 assert type(query_semantic_scholar_api.json_schema) == dict
 assert query_semantic_scholar_api.json_schema['function']['name'] == "query_semantic_scholar_api"
-assert 'identifyer' in query_semantic_scholar_api.json_schema['function']['parameters']['properties'].keys()
-assert 'identifyer_type' in query_semantic_scholar_api.json_schema['function']['parameters']['properties'].keys()
+assert 'query_param' in query_semantic_scholar_api.json_schema['function']['parameters']['properties'].keys()
+print("All tests passed!")
 
-# %% ../nbs/01_core.ipynb 112
+# %% ../nbs/01_core.ipynb 121
 import json
 from unittest.mock import patch
 
@@ -808,25 +943,21 @@ def test_query_semantic_scholar_api():
         mock_get.return_value.json.return_value = mock_success_response
 
         # Test with a title
-        result = query_semantic_scholar_api("Example Article", "title")
+        result = query_semantic_scholar_api("Example Article")
         assert isinstance(result, str), "Result should be a string"
         
         parsed_result = json.loads(result)
         assert parsed_result == mock_success_response, "Returned JSON should match the mock response"
 
         # Test with a DOI
-        result = query_semantic_scholar_api("10.1234/example.doi", "doi")
+        result = query_semantic_scholar_api("10.1234/example.doi")
         assert isinstance(result, str), "Result should be a string"
         
         parsed_result = json.loads(result)
         assert parsed_result == mock_success_response, "Returned JSON should match the mock response"
 
-        # Test with an invalid identifier type
-        result = query_semantic_scholar_api("Example", "invalid_type")
-        assert "error" in json.loads(result), "Should return an error message for invalid identifier type"
-
     # Test with an empty identifier
-    result = query_semantic_scholar_api("", "title")
+    result = query_semantic_scholar_api("")
     assert "error" in json.loads(result), "Should return an error message for empty identifier"
 
     print("All tests passed!")
@@ -835,11 +966,13 @@ def test_query_semantic_scholar_api():
 test_query_semantic_scholar_api()
 
 
-# %% ../nbs/01_core.ipynb 117
+# %% ../nbs/01_core.ipynb 125
 @json_schema_decorator
 def respond_to_generic_queries() -> str:
     """
     A function to respond to generic questions or queries from the user. Use this tool if no better tool is available.
+
+    This tool does not take any arguments.
 
     Returns:
         str: A response to a generic question.
@@ -847,15 +980,16 @@ def respond_to_generic_queries() -> str:
 
     return "There is no specific tool available to respond this query from the user. State your capabilities based the system message or provide a response based on the conversation history."
 
-# %% ../nbs/01_core.ipynb 118
+# %% ../nbs/01_core.ipynb 126
 assert type(respond_to_generic_queries.json_schema) == dict
 assert respond_to_generic_queries.json_schema['function']['name'] == "respond_to_generic_queries"
 assert type(respond_to_generic_queries()) == str
+print("All tests passed!")
 
-# %% ../nbs/01_core.ipynb 120
+# %% ../nbs/01_core.ipynb 128
 from typing import Generator
 
-# %% ../nbs/01_core.ipynb 121
+# %% ../nbs/01_core.ipynb 129
 def show_response(response: Dict[str, Any] or Generator[Dict[str, Any], None, None]) -> None:
     """
     Print the response from the LLM in a human-readable format.
@@ -887,11 +1021,11 @@ def show_response(response: Dict[str, Any] or Generator[Dict[str, Any], None, No
     else:
         raise ValueError(f"\n{RED}nvalid response type. Must be a dictionary or a generator.{RESET}")
 
-# %% ../nbs/01_core.ipynb 123
+# %% ../nbs/01_core.ipynb 131
 import ollama
 from typing import Dict, Any, List
 
-# %% ../nbs/01_core.ipynb 124
+# %% ../nbs/01_core.ipynb 132
 class Assistant:
     def __init__(self,
         sys_message: str or None = None, # The system message for the assistant; if not provided, a default message is used
@@ -902,11 +1036,12 @@ class Assistant:
            "get_titles_and_first_authors": get_titles_and_first_authors,
            "summarize_local_document": summarize_local_document,
            "describe_python_code": describe_python_code,
+           "id_converter_tool": id_converter_tool,
            "query_openalex_api": query_openalex_api,
            "query_semantic_scholar_api": query_semantic_scholar_api,
            "respond_to_generic_queries": respond_to_generic_queries,
         },
-        add_tools: Dict[str, Any] = {}, # Additional tools to add to the assistant
+        add_tools: Dict[str, Any] = {}, # Optional argument to add additional tools to the assistant, when initializing
         authentication: Optional[Dict[str, str]] = None, # Authentication credentials for API calls to external services
         dir_path: str = "../data", # The directory path to which the assistant has access on the local computer
         messages: List[Dict[str, str]] = [], # The conversation history
@@ -914,7 +1049,9 @@ class Assistant:
         self.sys_message = sys_message
         self.model = model
         self.tools = tools
-        self.tools.update(add_tools)
+        self.tools.update(add_tools) # Add additional tools to the assistant, if provided
+        if self.tools:
+            self.tools["describe_tools"] = self.describe_tools # Add the describe_tools function to the tools list for the assistant, if the tools list is not empty
         self.authentication = authentication or {}
         self.dir_path = dir_path
         self.messages = messages
@@ -986,11 +1123,23 @@ class Assistant:
         return self.__str__()
 
     def list_tools(self):
+        "List the available tools in the assistant."
         for tool in self.tools.keys():
             print(tool)
 
     def get_tools_schema(self):
+        "Return the JSON schema for the available tools."
         return [func.json_schema for func in self.tools.values()]
+
+    @json_schema_decorator
+    def describe_tools(self) -> str:
+        """Use this tool when asked about the assistant's available tools and capabilities.
+
+        Returns:
+            str: A string with the descriptions of the available tools.
+        """
+        return f"Available tools are: {self.get_tools_schema()}\n State your capabilities based the available tools in a conversational manner."
+        # return f"{self.pprint_tools()}\n State your capabilities based the available tools in a conversational manner."
 
     def chat(self, prompt: str, show_progress: bool = False):
         """
@@ -1044,21 +1193,24 @@ class Assistant:
             function_to_call = self.tools[tool['function']['name']]
             if show_progress: print(f"Calling {tool['function']['name']}() with arguments {tool['function']['arguments']}...\n")
             args = tool['function']['arguments']
-            function_response = function_to_call(**args)
-            # print(f"Function response type: {type(function_response)}\n") # Uncomment for debugging
-            # print(f"Function response: {function_response}\n") # Uncomment for debugging
 
-            function_response = str(function_response) if function_response is not None else ""
-            # assert isinstance(function_response, str), "Function response must be a string."
+            try:
+                function_response = function_to_call(**args)
+                # print(f"Function response type: {type(function_response)}\n") # Uncomment for debugging
+                # print(f"Function response: {function_response}\n") # Uncomment for debugging
+                function_response = str(function_response) if function_response is not None else ""
+                # assert isinstance(function_response, str), "Function response must be a string."
+            except Exception as e:
+                function_response = f"Error: {e}"
 
-            if show_progress: print(f"Function response:\n{function_response}\n")
+                if show_progress: print(f"Function response:\n{function_response}\n")
             # Add the fucntion response to the conversation history
-            self.messages.append(
+            self.messages.append( 
                 {
                     'role': 'tool',
                     'content': function_response,
                 }
-            )
+            ) 
 
         # Make a second request to the LLM with the tool output to generate a final response
         if show_progress: print("Generating final response...")
@@ -1084,14 +1236,14 @@ class Assistant:
         return None
 
 
-# %% ../nbs/01_core.ipynb 126
+# %% ../nbs/01_core.ipynb 134
 def add_to_class(Class: type):
     """Register functions as methods in a class that has already been defined."""
     def wrapper(obj):
         setattr(Class, obj.__name__, obj)
     return wrapper
 
-# %% ../nbs/01_core.ipynb 127
+# %% ../nbs/01_core.ipynb 135
 @add_to_class(Assistant)
 def show_conversion_history(self):
     """Display the conversation history."""
@@ -1120,8 +1272,17 @@ def show_conversion_history(self):
                 for fn_return in message['content']:
                     print(f"{BOLD}{GREY}Function return:{RESET} {GREY}{fn_return}{RESET}\n")
 
-# %% ../nbs/01_core.ipynb 128
+# %% ../nbs/01_core.ipynb 136
 @add_to_class(Assistant)
 def clear_conversion_history(self):
     """Clear the conversation history."""
     self.messages = [{'role': "system", 'content': self.sys_message},]
+
+# %% ../nbs/01_core.ipynb 138
+@add_to_class(Assistant)
+def pprint_tools(self):
+    for tool in self.get_tools_schema():   
+        print(f"""* Tool name: {tool.get("function", {}).get("name", "No name available.")}
+    Description: {tool.get("function", {}).get("description", "No description available.")}
+        """)
+    return None

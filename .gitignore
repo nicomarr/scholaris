@@ -154,3 +154,4 @@ checklink/cookies.txt
 # local data
 data/*
 proprietary_data/*
+nbs/ignore.ipynb
