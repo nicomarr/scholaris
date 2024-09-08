@@ -305,9 +305,8 @@ assistant.list_tools()
 > Code page, which lists each function and provides a brief description
 > of its purpose, functionality, required arguments, and usage (the
 > docstring). This information helps you understand the available tools
-> and how the LLM uses them. Alternatively, if you prefer to see the
-> schema for all tools the assistant can call, you can execute the
-> `assistant.get_tools_schema()` method.
+> and how the LLM uses them. Alternatively, you can execute the
+> `assistant.pprint_tools()` or `assistant.get_tools_schema()` methods.
 
 ## Authentication for tool calling and API access (optional)
 
