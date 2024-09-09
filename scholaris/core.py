@@ -62,12 +62,12 @@ def generate_json_schema(func: Callable) -> Dict[str, Any]:
             else:
                 parts = line.split(':')
                 if len(parts) >= 2:
-                    # print(parts)
+                    # print(parts) # Uncomment for debugging
                     arg_name = parts[0].split(' ')[0].strip()
                     arg_desc = ':'.join(parts[1:]).strip()
-                    # print(arg_name, arg_desc)
+                    # print(arg_name, arg_desc) # Uncomment for debugging
                     arg_descriptions[arg_name] = arg_desc
-                    # print(arg_descriptions)
+                    # print(arg_descriptions) # Uncomment for debugging
                     if 'optional' not in parts[0].lower():
                         schema['function']['parameters']['required'].append(arg_name)
 
@@ -124,7 +124,7 @@ def json_schema_decorator(func: T) -> T:
     wrapper.json_schema = schema  # Attach the schema dictionary directly
     return wrapper
 
-# %% ../nbs/01_core.ipynb 43
+# %% ../nbs/01_core.ipynb 42
 @json_schema_decorator
 def get_file_names(ext: str = "pdf, txt") -> str:
     """Retrieves a list of file names with specified extensions in a local data directory the assistant has access to on the user's computer.
@@ -137,6 +137,7 @@ def get_file_names(ext: str = "pdf, txt") -> str:
 
     Example:
         >>> get_file_names(ext="pdf, txt")
+        
         "List of file names with the specified extensions in the local data directory: file1.pdf, file2.txt"
     """
 
@@ -168,15 +169,15 @@ def get_file_names(ext: str = "pdf, txt") -> str:
     # Convert list to a comma-separated string. This is because the object is returned to the LLM and the API accepts str only
     return f"List of file names with the specified extensions in the local data directory: {file_names_json}"
 
-# %% ../nbs/01_core.ipynb 44
+# %% ../nbs/01_core.ipynb 43
 assert type(get_file_names.json_schema) == dict
 assert get_file_names.json_schema['function']['name'] == "get_file_names"
 
-# %% ../nbs/01_core.ipynb 55
+# %% ../nbs/01_core.ipynb 54
 import PyPDF2
 
 
-# %% ../nbs/01_core.ipynb 56
+# %% ../nbs/01_core.ipynb 55
 @json_schema_decorator
 def extract_text_from_pdf(file_name: str, page_range: Optional[str] = None) -> str:
     """A function that extracts text from a PDF file.
@@ -268,11 +269,11 @@ def extract_text_from_pdf(file_name: str, page_range: Optional[str] = None) -> s
 
     return text
 
-# %% ../nbs/01_core.ipynb 59
+# %% ../nbs/01_core.ipynb 58
 from tqdm import tqdm
 
 
-# %% ../nbs/01_core.ipynb 60
+# %% ../nbs/01_core.ipynb 59
 def extract_title_and_first_author(contents: List[Dict[str, str]], model: str='llama3.1', verbose: Optional[bool] = False, show_progress: Optional[bool] = False) -> List[Dict[str, str]]:
     """
     A function that extracts the titles and the first author's names from the text of one or more research articles.
@@ -352,7 +353,7 @@ def extract_title_and_first_author(contents: List[Dict[str, str]], model: str='l
     print("\n") if show_progress else None # Add a newline if showing progress bar
     return contents
 
-# %% ../nbs/01_core.ipynb 68
+# %% ../nbs/01_core.ipynb 67
 @json_schema_decorator
 def get_titles_and_first_authors() -> str:
     """
@@ -402,7 +403,7 @@ def get_titles_and_first_authors() -> str:
         
     return json.dumps(titles_and_authors, indent=2) # Return as a JSON-formatted string
 
-# %% ../nbs/01_core.ipynb 70
+# %% ../nbs/01_core.ipynb 69
 assert type(get_titles_and_first_authors.json_schema) == dict
 assert get_titles_and_first_authors.json_schema['function']['name'] == "get_titles_and_first_authors"
 
@@ -729,7 +730,7 @@ def id_converter_tool(ids: List[str]) -> str:
     
     return json.dumps(result, indent=2)
 
-# %% ../nbs/01_core.ipynb 98
+# %% ../nbs/01_core.ipynb 94
 @json_schema_decorator
 def query_openalex_api(query_param: str) -> str:
     """
@@ -823,11 +824,11 @@ def query_openalex_api(query_param: str) -> str:
     else:
         return json.dumps(raw_search_results, indent=2)
 
-# %% ../nbs/01_core.ipynb 113
+# %% ../nbs/01_core.ipynb 109
 import time
 import re
 
-# %% ../nbs/01_core.ipynb 117
+# %% ../nbs/01_core.ipynb 111
 @json_schema_decorator
 def query_semantic_scholar_api(query_param: str) -> str:
     """
@@ -904,7 +905,7 @@ def query_semantic_scholar_api(query_param: str) -> str:
     else:
         return f"Error: Failed to query Semantic Scholar API. Status code: {response.status_code}"
 
-# %% ../nbs/01_core.ipynb 124
+# %% ../nbs/01_core.ipynb 118
 @json_schema_decorator
 def respond_to_generic_queries() -> str:
     """
@@ -918,10 +919,10 @@ def respond_to_generic_queries() -> str:
 
     return "There is no specific tool available to respond this query from the user. State your capabilities based the system message or provide a response based on the conversation history."
 
-# %% ../nbs/01_core.ipynb 127
+# %% ../nbs/01_core.ipynb 122
 from typing import Generator
 
-# %% ../nbs/01_core.ipynb 128
+# %% ../nbs/01_core.ipynb 123
 def show_response(response: Dict[str, Any] or Generator[Dict[str, Any], None, None]) -> None:
     """
     Print the response from the LLM in a human-readable format.
@@ -953,11 +954,11 @@ def show_response(response: Dict[str, Any] or Generator[Dict[str, Any], None, No
     else:
         raise ValueError(f"\n{RED}nvalid response type. Must be a dictionary or a generator.{RESET}")
 
-# %% ../nbs/01_core.ipynb 130
+# %% ../nbs/01_core.ipynb 125
 import ollama
 from typing import Dict, Any, List
 
-# %% ../nbs/01_core.ipynb 131
+# %% ../nbs/01_core.ipynb 126
 class Assistant:
     def __init__(self,
         sys_message: str or None = None, # The system message for the assistant; if not provided, a default message is used
@@ -1168,14 +1169,14 @@ class Assistant:
         return None
 
 
-# %% ../nbs/01_core.ipynb 133
+# %% ../nbs/01_core.ipynb 128
 def add_to_class(Class: type):
     """Register functions as methods in a class that has already been defined."""
     def wrapper(obj):
         setattr(Class, obj.__name__, obj)
     return wrapper
 
-# %% ../nbs/01_core.ipynb 134
+# %% ../nbs/01_core.ipynb 129
 @add_to_class(Assistant)
 def show_conversion_history(self, show_function_calls: bool = False):
     """Display the conversation history.
@@ -1211,13 +1212,13 @@ def show_conversion_history(self, show_function_calls: bool = False):
                 for fn_return in message['content']:
                     print(f"{BOLD}{GREY}Function return:{RESET} {GREY}{fn_return}{RESET}\n")
 
-# %% ../nbs/01_core.ipynb 135
+# %% ../nbs/01_core.ipynb 130
 @add_to_class(Assistant)
 def clear_conversion_history(self):
     """Clear the conversation history."""
     self.messages = [{'role': "system", 'content': self.sys_message},]
 
-# %% ../nbs/01_core.ipynb 137
+# %% ../nbs/01_core.ipynb 132
 @add_to_class(Assistant)
 def pprint_tools(self):
     for tool in self.get_tools_schema():   
