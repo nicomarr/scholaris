@@ -79,7 +79,7 @@ assistant = Assistant()
 
     Loaded Semantic Scholar API key from the environment variables.
     Loaded email address from the environment variables.
-    A local directory ../data already exists for storing data files. No of files: 1
+    A local directory /Users/user2/GitHub/scholaris/data already exists for storing data files. No of files: 1
 
 > [!NOTE]
 >
@@ -88,9 +88,8 @@ assistant = Assistant()
 > file was downloaded and saved to the local data directory for
 > demonstration purposes. You can download the same PDF file, or
 > additional/other files by running the following commands in a Jupyter
-> notebook cell. Alternatively, you can download and add the files
-> manually to the local data directory if the assistant has already been
-> initialized.
+> notebook cell. Alternatively, you can also download and add files
+> manually to the local data directory after initialization.
 >
 > ``` python
 > !mkdir -p ../data
@@ -100,6 +99,13 @@ assistant = Assistant()
 > ]
 > for url in pdf_urls:
 >     !curl -o ../data/$(basename {url}) {url}
+> ```
+>
+> To see where data are stored afer initialization, simply call the
+> `dir_path` attribute of the `assistant` object, like so:
+>
+> ``` python
+> print(assistant.dir_path)
 > ```
 
 You can also explicitly set the model by passing the model name as an
@@ -119,20 +125,49 @@ assistant = Assistant(model="llama3.1:latest")
 
     Loaded Semantic Scholar API key from the environment variables.
     Loaded email address from the environment variables.
-    A local directory ../data already exists for storing data files. No of files: 1
+    A local directory /Users/user2/GitHub/scholaris/data already exists for storing data files. No of files: 1
 
 ## How to use
 
 To chat with the assistant, simply call the `chat()` method with your
-prompt as input:
+prompt as input. You also can store the response in a variable, but this
+is optional. By default, the assistant will stream the response and
+store the conversation history.
 
 ``` python
-assistant.chat("Which pdf files do you have access to on the local computer?")
+response = assistant.chat("Tell me about the tools you have available.")
 ```
 
+    I'm happy to chat with you! I have a range of tools at my disposal, designed to assist with various tasks.
 
+    Firstly, I can summarize local documents (PDFs, markdown files, or text documents) using the `summarize_local_document` tool. This function will extract key information and provide a concise summary of the content.
 
-    I can provide information from a single PDF file named `jci.insight.144499.v2.pdf`. Would you like me to help with anything specific within that document?
+    I also have access to the `describe_tools` tool, which provides an overview of my available tools and capabilities. Feel free to ask me about specific tools if you're unsure what they do!
+
+    Additionally, I can help with tasks related to Python code using the `describe_python_code` tool. This function will provide a description of the purpose and structure of Python code in local files.
+
+    If you need information on research articles, I have access to tools that can retrieve metadata from OpenAlex (the `query_openalex_api` tool) or Semantic Scholar (the `query_semantic_scholar_api` tool). These functions use article titles, PubMed IDs, or digital object identifiers as query parameters.
+
+    I also have a tool for converting various types of research IDs (ID_converter_tool), which can convert between PMIDs, PMCIDs, DOIs, and manuscript IDs.
+
+    Lastly, I can respond to generic questions using the `respond_to_generic_queries` function if no other specific tools are available.
+
+    That's an overview of my capabilities! If you have any specific questions or requests, feel free to ask.
+
+> [!TIP]
+>
+> You can also access the assistant’s responses from the `message`
+> attribute, like so:
+>
+> ``` python
+> assistant.messages[-1]["content"] # Access the last message
+> ```
+
+``` python
+response == assistant.messages[-1]["content"]
+```
+
+    True
 
 By setting `show_progress=True`, you can see the step-by-step progress
 of the fuction calling. This includes the tool choice, selected
@@ -140,33 +175,40 @@ arguments, if applicable, and the output of the called function that is
 being passed back to the LLM to generate the final response.
 
 ``` python
-assistant.chat("Does this document have a title?", show_progress=True)
+response = assistant.chat("Which PDF files do you have access to in the local data directory", show_progress=True)
 ```
 
     Selecting tools...
 
-    [{'function': {'name': 'get_titles_and_first_authors', 'arguments': {}}}]
-    Calling get_titles_and_first_authors() with arguments {}...
-
-
+    [{'function': {'name': 'get_file_names', 'arguments': {'ext': 'pdf'}}}]
+    Calling get_file_names() with arguments {'ext': 'pdf'}...
 
     Generating final response...
+    Based on the available tools, I have access to 1 PDF file:
 
+    *jci.insight.144499.v2.pdf*
 
-    The document `jci.insight.144499.v2.pdf` has a title: "Distinct antibody repertoires against endemic human coronaviruses in children and adults". Would you like me to provide more information about this article?
+    This file is located in the local data directory and has a .pdf extension. If you'd like me to summarize this document or describe its content, please let me know!
 
-    Extracting titles and first authors: 100%|██████████| 1/1 [00:01<00:00,  1.97s/it]
-
-To get information about a research article from external sources,
-simply ask the assistant:
+By default, streaming is enabled. If you like to disable streaming, set
+`stream=False`. This will store the entire conversation history in the
+`messages` attribute, which can be accessed as shown above.
 
 ``` python
-assistant.chat("No thanks. Can you provide the corresponding PMID for another article with the DOI 10.1126/science.adh4059?")
+response = assistant.chat("Does this document have a title?", stream_response=False)
 ```
 
+    Extracting titles and first authors: 100%|██████████| 1/1 [00:07<00:00,  7.59s/it]
 
 
-    The PMID corresponding to the DOI `10.1126/science.adh4059` is `38422122`.
+
+    Yes, this document has a title.
+
+    The title of the PDF file *jci.insight.144499.v2.pdf* is:
+
+    "Distinct antibody repertoires against endemic human coronaviruses in children and adults"
+
+    This information was retrieved using the `get_titles_and_first_authors` tool.
 
 ## Conversation history
 
@@ -177,17 +219,41 @@ Show the conversation history by calling the assistant’s
 assistant.show_conversion_history()
 ```
 
-    User: Which pdf files do you have access to on the local computer?
+    User: Tell me about the tools you have available.
 
-    Assistant response: I can provide information from a single PDF file named `jci.insight.144499.v2.pdf`. Would you like me to help with anything specific within that document?
+    Assistant response: I'm happy to chat with you! I have a range of tools at my disposal, designed to assist with various tasks.
+
+    Firstly, I can summarize local documents (PDFs, markdown files, or text documents) using the `summarize_local_document` tool. This function will extract key information and provide a concise summary of the content.
+
+    I also have access to the `describe_tools` tool, which provides an overview of my available tools and capabilities. Feel free to ask me about specific tools if you're unsure what they do!
+
+    Additionally, I can help with tasks related to Python code using the `describe_python_code` tool. This function will provide a description of the purpose and structure of Python code in local files.
+
+    If you need information on research articles, I have access to tools that can retrieve metadata from OpenAlex (the `query_openalex_api` tool) or Semantic Scholar (the `query_semantic_scholar_api` tool). These functions use article titles, PubMed IDs, or digital object identifiers as query parameters.
+
+    I also have a tool for converting various types of research IDs (ID_converter_tool), which can convert between PMIDs, PMCIDs, DOIs, and manuscript IDs.
+
+    Lastly, I can respond to generic questions using the `respond_to_generic_queries` function if no other specific tools are available.
+
+    That's an overview of my capabilities! If you have any specific questions or requests, feel free to ask.
+
+    User: Which PDF files do you have access to in the local data directory
+
+    Assistant response: Based on the available tools, I have access to 1 PDF file:
+
+    *jci.insight.144499.v2.pdf*
+
+    This file is located in the local data directory and has a .pdf extension. If you'd like me to summarize this document or describe its content, please let me know!
 
     User: Does this document have a title?
 
-    Assistant response: The document `jci.insight.144499.v2.pdf` has a title: "Distinct antibody repertoires against endemic human coronaviruses in children and adults". Would you like me to provide more information about this article?
+    Assistant response: Yes, this document has a title.
 
-    User: No thanks. Can you provide the corresponding PMID for another article with the DOI 10.1126/science.adh4059?
+    The title of the PDF file *jci.insight.144499.v2.pdf* is:
 
-    Assistant response: The PMID corresponding to the DOI `10.1126/science.adh4059` is `38422122`.
+    "Distinct antibody repertoires against endemic human coronaviruses in children and adults"
+
+    This information was retrieved using the `get_titles_and_first_authors` tool.
 
 > [!NOTE]
 >
@@ -267,7 +333,7 @@ assistant = Assistant(dir_path="../proprietary_data")
 
     Loaded Semantic Scholar API key from the environment variables.
     Loaded email address from the environment variables.
-    A local directory ../proprietary_data already exists for storing data files. No of files: 0
+    A local directory /Users/user2/GitHub/scholaris/proprietary_data already exists for storing data files. No of files: 0
 
 ## Tools
 
@@ -336,7 +402,7 @@ authentication = {
 assistant = Assistant(authentication=authentication)
 ```
 
-    A local directory ../data already exists for storing data files. No of files: 1
+    A local directory /Users/user2/GitHub/scholaris/data already exists for storing data files. No of files: 1
 
 If you want to change the core functions, you can do so by passing the
 desired core functions as an argument to the Assistant class when it is
@@ -355,7 +421,7 @@ assistant = Assistant(tools = {
 
     Loaded Semantic Scholar API key from the environment variables.
     Loaded email address from the environment variables.
-    A local directory ../data already exists for storing data files. No of files: 1
+    A local directory /Users/user2/GitHub/scholaris/data already exists for storing data files. No of files: 1
 
 > [!NOTE]
 >
@@ -372,10 +438,20 @@ assistant.chat("What is the capital of France?")
 
     Loaded Semantic Scholar API key from the environment variables.
     Loaded email address from the environment variables.
-    A local directory ../data already exists for storing data files. No of files: 1
+    A local directory /Users/user2/GitHub/scholaris/data already exists for storing data files. No of files: 1
 
     No tools provided! Please add tools to the assistant.
     No tool calls found in the response. Adding an empty tool_calls list to the conversation history. Aborting...
+
+:::{.callout-tip} When working in a Jupyter notebook environment, you
+can quickly display details of the class methods by using special
+syntax. Type the name of the object, followed by a `?`, or type `??` to
+get more detailed information (i.e., the source code), like so:
+
+``` python
+assistant.chat?
+assistant??
+```
 
 ## Developer Guide
 
@@ -480,7 +556,7 @@ assistant = Assistant(add_tools = {"multiply_two_integers": multiply_two_integer
 
     Loaded Semantic Scholar API key from the environment variables.
     Loaded email address from the environment variables.
-    A local directory ../data already exists for storing data files. No of files: 1
+    A local directory /Users/user2/GitHub/scholaris/data already exists for storing data files. No of files: 1
 
 You can confirm that the new tool has been added to the list of existing
 tools by using the `list_tools()` method:
@@ -507,13 +583,15 @@ assistant.chat("What is the product of 4173 and 351?", show_progress=True)
 
     Selecting tools...
 
-    [{'function': {'name': 'multiply_two_integers', 'arguments': {'a': 4173, 'b': 351}}}]
-    Calling multiply_two_integers() with arguments {'a': 4173, 'b': 351}...
+    [{'function': {'name': 'multiply_two_integers', 'arguments': {'a': '4173', 'b': '351'}}}]
+    Calling multiply_two_integers() with arguments {'a': '4173', 'b': '351'}...
 
     Generating final response...
+    To calculate the product, I'll treat the inputs as integers.
 
+    The product of 4173 and 351 is 1,464,303.
 
-    The result of multiplying 4173 by 351 is 1,464,723.
+    "To calculate the product, I'll treat the inputs as integers.\n\nThe product of 4173 and 351 is 1,464,303."
 
 ### Adding methods
 
@@ -531,3 +609,20 @@ def clear_conversion_history(self):
     """Clear the conversation history."""
     self.messages = [{'role': "system", 'content': self.sys_message},]
 ```
+
+### Contributing to this library
+
+This library has been developed using the
+[nbdev](https://nbdev.fast.ai/) framework. To contribute to this
+library, install `nbdev` and follow the [nbdev
+documentation](https://nbdev.fast.ai/tutorials/tutorial.html) to set up
+your development environment.
+
+## Acknowledgements
+
+Many thanks to the developers of [Ollama](https://ollama.com/) and the
+[Ollama Python library](https://pypi.org/project/ollama/) for providing
+the core functionality that Scholaris is built upon. Special thanks to
+the developers of [nbdev](https://nbdev.fast.ai/) for making it easy to
+develop and document this library, and for many insightful tutorials and
+inspirations!

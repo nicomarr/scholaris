@@ -15,7 +15,6 @@ import os
 import random
 import ollama
 
-
 # %% ../nbs/01_core.ipynb 38
 def generate_json_schema(func: Callable) -> Dict[str, Any]:
     """
@@ -958,40 +957,10 @@ def show_response(response: Dict[str, Any] or Generator[Dict[str, Any], None, No
 import ollama
 from typing import Dict, Any, List
 
-# %% ../nbs/01_core.ipynb 137
+# %% ../nbs/01_core.ipynb 133
 import sys
 import io
 from pathlib import Path
-
-# def show_response(response: Dict[str, Any] or Generator[Dict[str, Any], None, None]) -> str:
-#     BLUE = "\033[94m"
-#     RED = "\033[91m"
-#     RESET = "\033[0m"
-
-#     if isinstance(response, dict):
-#         print("is_dict") # Uncomment for debugging
-#         content = f"{response['message']['content']}"
-#         print(f"\n{BLUE}{content}{RESET}")
-#         return content
-
-#     elif isinstance(response, Generator):
-#         print("is_generator") # Uncomment for debugging
-#         full_response = ""
-#         for chunk in response:
-#             content = chunk['message']['content']
-#             full_response += content
-#             print(f"{BLUE}{content}{RESET}", end='', flush=True)
-#         print()  # Add a newline at the end
-#         return full_response
-    
-#     elif response is None:
-#         message = "No response from the LLM."
-#         print(f"\n{RED}{message}{RESET}")
-#         return message
-    
-    # else:
-    #     raise ValueError(f"\n{RED}Invalid response type. Must be a dictionary or a generator.{RESET}")
-
 
 class Assistant:
     def __init__(self,
@@ -1232,14 +1201,14 @@ class Assistant:
                 self.messages.append({'role': 'assistant', 'content': full_content})
                 return full_content  # Return the full content, not as a generator
 
-# %% ../nbs/01_core.ipynb 145
+# %% ../nbs/01_core.ipynb 141
 def add_to_class(Class: type):
     """Register functions as methods in a class that has already been defined."""
     def wrapper(obj):
         setattr(Class, obj.__name__, obj)
     return wrapper
 
-# %% ../nbs/01_core.ipynb 146
+# %% ../nbs/01_core.ipynb 142
 @add_to_class(Assistant)
 def show_conversion_history(self, show_function_calls: bool = False):
     """Display the conversation history.
@@ -1275,13 +1244,13 @@ def show_conversion_history(self, show_function_calls: bool = False):
                 for fn_return in message['content']:
                     print(f"{BOLD}{GREY}Function return:{RESET} {GREY}{fn_return}{RESET}\n")
 
-# %% ../nbs/01_core.ipynb 147
+# %% ../nbs/01_core.ipynb 143
 @add_to_class(Assistant)
 def clear_conversion_history(self):
     """Clear the conversation history."""
     self.messages = [{'role': "system", 'content': self.sys_message},]
 
-# %% ../nbs/01_core.ipynb 149
+# %% ../nbs/01_core.ipynb 145
 @add_to_class(Assistant)
 def pprint_tools(self):
     for tool in self.get_tools_schema():   

@@ -71,7 +71,11 @@ def get_last_tool_names(messages):
 
 # Initialize the assistant if not already in session state
 if "assistant" not in st.session_state:
-    st.session_state.assistant = Assistant(model="llama3.1", dir_path="./data")
+    try:
+        st.session_state.assistant = Assistant(model="llama3.1", dir_path="./data")
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
+        st.stop()
 
 # Initialize other session state variables
 if "uploaded_files" not in st.session_state:
@@ -132,6 +136,7 @@ if st.session_state.assistant:
         st.write("---")
         st.write("Source code available on [GitHub](https://github.com/nicomarr/scholaris/blob/main/scholaris/ui.py)")
 
+
     # Main Chat Interface
     for msg in st.session_state.assistant.messages: # Display chat messages from history on app rerun
         if msg["role"] == "system" or msg["role"] == "tool": # Skip system message and tool returns
@@ -147,16 +152,12 @@ if st.session_state.assistant:
         with st.spinner("Thinking...") as status: # Display status while assistant is processing
             with st.chat_message("assistant"):
                 stream = st.session_state.assistant.chat(prompt=prompt, redirect_output=True)
-                if stream:
-                    response = st.write_stream(stream)
-                else:
-                    st.markdown("I'm sorry, I am unable to respond to that query.")
+                try:
+                    if stream:
+                        response = st.write_stream(stream)
+                    else:
+                        st.markdown("I'm sorry, I am unable to respond to that query.")
+                except Exception as e:
+                    st.error(f"An error occurred: {e}")
         with st.popover("Tools used"):
             st.markdown(get_last_tool_names(st.session_state.assistant.messages))
-    
-    # st.subheader("For debugging:")
-    # st.write("dirpath", st.session_state.assistant.dir_path)
-    # st.write("assistant.messages", st.session_state.assistant.messages)
-    # st.write("last message", st.session_state.messages[-1])
-    # st.write("len_messages", len(st.session_state.messages))
-    # st.write("uploaded_files", st.session_state.uploaded_files)
