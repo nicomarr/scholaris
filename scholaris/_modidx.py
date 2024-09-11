@@ -2,8 +2,8 @@
 
 d = { 'settings': { 'branch': 'main',
                 'doc_baseurl': '/scholaris',
-                'doc_host': 'https://nicomarr.github.io',
-                'git_url': 'https://github.com/nicomarr/scholaris',
+                'doc_host': 'https://nmarr.github.io',
+                'git_url': 'https://github.com/nmarr/scholaris',
                 'lib_path': 'scholaris'},
   'syms': { 'scholaris.core': { 'scholaris.core.Assistant': ('core.html#assistant', 'scholaris/core.py'),
                                 'scholaris.core.Assistant.__init__': ('core.html#assistant.__init__', 'scholaris/core.py'),
@@ -34,4 +34,5 @@ d = { 'settings': { 'branch': 'main',
                                 'scholaris.core.respond_to_generic_queries': ('core.html#respond_to_generic_queries', 'scholaris/core.py'),
                                 'scholaris.core.show_conversion_history': ('core.html#show_conversion_history', 'scholaris/core.py'),
                                 'scholaris.core.show_response': ('core.html#show_response', 'scholaris/core.py'),
-                                'scholaris.core.summarize_local_document': ('core.html#summarize_local_document', 'scholaris/core.py')}}}
+                                'scholaris.core.summarize_local_document': ('core.html#summarize_local_document', 'scholaris/core.py')},
+            'scholaris.ui': {}}}

@@ -7,7 +7,7 @@ __all__ = ['T', 'generate_json_schema', 'json_schema_decorator', 'get_file_names
            'query_semantic_scholar_api', 'respond_to_generic_queries', 'show_response', 'Assistant', 'add_to_class',
            'show_conversion_history', 'clear_conversion_history', 'pprint_tools']
 
-# %% ../nbs/01_core.ipynb 30
+# %% ../nbs/01_core.ipynb 37
 import inspect
 from typing import Callable, Dict, List, Tuple, Optional, Any, Union 
 import json
@@ -16,7 +16,7 @@ import random
 import ollama
 
 
-# %% ../nbs/01_core.ipynb 31
+# %% ../nbs/01_core.ipynb 38
 def generate_json_schema(func: Callable) -> Dict[str, Any]:
     """
     Generate a JSON schema for the given function based on its annotations and docstring.
@@ -99,11 +99,11 @@ def _get_type(arg_type):
     else:
         return "object"
 
-# %% ../nbs/01_core.ipynb 32
+# %% ../nbs/01_core.ipynb 39
 import functools
 from typing import TypeVar
 
-# %% ../nbs/01_core.ipynb 33
+# %% ../nbs/01_core.ipynb 40
 T = TypeVar('T', bound=Callable)
 
 def json_schema_decorator(func: T) -> T:
@@ -124,7 +124,7 @@ def json_schema_decorator(func: T) -> T:
     wrapper.json_schema = schema  # Attach the schema dictionary directly
     return wrapper
 
-# %% ../nbs/01_core.ipynb 42
+# %% ../nbs/01_core.ipynb 49
 @json_schema_decorator
 def get_file_names(ext: str = "pdf, txt") -> str:
     """Retrieves a list of file names with specified extensions in a local data directory the assistant has access to on the user's computer.
@@ -169,15 +169,15 @@ def get_file_names(ext: str = "pdf, txt") -> str:
     # Convert list to a comma-separated string. This is because the object is returned to the LLM and the API accepts str only
     return f"List of file names with the specified extensions in the local data directory: {file_names_json}"
 
-# %% ../nbs/01_core.ipynb 43
+# %% ../nbs/01_core.ipynb 50
 assert type(get_file_names.json_schema) == dict
 assert get_file_names.json_schema['function']['name'] == "get_file_names"
 
-# %% ../nbs/01_core.ipynb 54
+# %% ../nbs/01_core.ipynb 61
 import PyPDF2
 
 
-# %% ../nbs/01_core.ipynb 55
+# %% ../nbs/01_core.ipynb 62
 @json_schema_decorator
 def extract_text_from_pdf(file_name: str, page_range: Optional[str] = None) -> str:
     """A function that extracts text from a PDF file.
@@ -269,11 +269,11 @@ def extract_text_from_pdf(file_name: str, page_range: Optional[str] = None) -> s
 
     return text
 
-# %% ../nbs/01_core.ipynb 58
+# %% ../nbs/01_core.ipynb 65
 from tqdm import tqdm
 
 
-# %% ../nbs/01_core.ipynb 59
+# %% ../nbs/01_core.ipynb 66
 def extract_title_and_first_author(contents: List[Dict[str, str]], model: str='llama3.1', verbose: Optional[bool] = False, show_progress: Optional[bool] = False) -> List[Dict[str, str]]:
     """
     A function that extracts the titles and the first author's names from the text of one or more research articles.
@@ -353,7 +353,7 @@ def extract_title_and_first_author(contents: List[Dict[str, str]], model: str='l
     print("\n") if show_progress else None # Add a newline if showing progress bar
     return contents
 
-# %% ../nbs/01_core.ipynb 67
+# %% ../nbs/01_core.ipynb 74
 @json_schema_decorator
 def get_titles_and_first_authors() -> str:
     """
@@ -403,11 +403,11 @@ def get_titles_and_first_authors() -> str:
         
     return json.dumps(titles_and_authors, indent=2) # Return as a JSON-formatted string
 
-# %% ../nbs/01_core.ipynb 69
+# %% ../nbs/01_core.ipynb 76
 assert type(get_titles_and_first_authors.json_schema) == dict
 assert get_titles_and_first_authors.json_schema['function']['name'] == "get_titles_and_first_authors"
 
-# %% ../nbs/01_core.ipynb 72
+# %% ../nbs/01_core.ipynb 79
 @json_schema_decorator
 def summarize_local_document(file_name: str, ext: str = "pdf") -> str:
     """Summarize the content of a single PDF, markdown, or text document from the local data directory.
@@ -515,13 +515,13 @@ def summarize_local_document(file_name: str, ext: str = "pdf") -> str:
     except Exception as e:
         return f"Error while summarizing the content of the document '{file_name}': {e}" 
 
-# %% ../nbs/01_core.ipynb 74
+# %% ../nbs/01_core.ipynb 81
 assert type(summarize_local_document.json_schema) == dict
 assert summarize_local_document.json_schema['function']['name'] == "summarize_local_document"
 assert 'file_name' in summarize_local_document.json_schema['function']['parameters']['properties'].keys()
 assert 'ext' in summarize_local_document.json_schema['function']['parameters']['properties'].keys()
 
-# %% ../nbs/01_core.ipynb 78
+# %% ../nbs/01_core.ipynb 85
 @json_schema_decorator
 def describe_python_code(file_name: str) -> str:
     """Describe the purpose of the Python code in a local Python file.
@@ -602,16 +602,16 @@ def describe_python_code(file_name: str) -> str:
     except Exception as e:
         return f"Error while describing the Python code in the file '{file_name}': {e}"
 
-# %% ../nbs/01_core.ipynb 80
+# %% ../nbs/01_core.ipynb 87
 assert type(describe_python_code.json_schema) == dict
 assert describe_python_code.json_schema['function']['name'] == "describe_python_code"
 assert 'file_name' in describe_python_code.json_schema['function']['parameters']['properties'].keys()
 
-# %% ../nbs/01_core.ipynb 85
+# %% ../nbs/01_core.ipynb 92
 import re
 import requests
 
-# %% ../nbs/01_core.ipynb 86
+# %% ../nbs/01_core.ipynb 93
 def convert_id(ids: List[str]) -> str:
     """
     For any article(s) in PubMed Central, find all the corresponding PubMed IDs (PMIDs), digital object identifiers (DOIs), and manuscript IDs (MIDs).
@@ -730,7 +730,7 @@ def id_converter_tool(ids: List[str]) -> str:
     
     return json.dumps(result, indent=2)
 
-# %% ../nbs/01_core.ipynb 94
+# %% ../nbs/01_core.ipynb 101
 @json_schema_decorator
 def query_openalex_api(query_param: str) -> str:
     """
@@ -824,11 +824,11 @@ def query_openalex_api(query_param: str) -> str:
     else:
         return json.dumps(raw_search_results, indent=2)
 
-# %% ../nbs/01_core.ipynb 109
+# %% ../nbs/01_core.ipynb 116
 import time
 import re
 
-# %% ../nbs/01_core.ipynb 111
+# %% ../nbs/01_core.ipynb 118
 @json_schema_decorator
 def query_semantic_scholar_api(query_param: str) -> str:
     """
@@ -905,7 +905,7 @@ def query_semantic_scholar_api(query_param: str) -> str:
     else:
         return f"Error: Failed to query Semantic Scholar API. Status code: {response.status_code}"
 
-# %% ../nbs/01_core.ipynb 118
+# %% ../nbs/01_core.ipynb 125
 @json_schema_decorator
 def respond_to_generic_queries() -> str:
     """
@@ -919,10 +919,10 @@ def respond_to_generic_queries() -> str:
 
     return "There is no specific tool available to respond this query from the user. State your capabilities based the system message or provide a response based on the conversation history."
 
-# %% ../nbs/01_core.ipynb 122
+# %% ../nbs/01_core.ipynb 129
 from typing import Generator
 
-# %% ../nbs/01_core.ipynb 123
+# %% ../nbs/01_core.ipynb 130
 def show_response(response: Dict[str, Any] or Generator[Dict[str, Any], None, None]) -> None:
     """
     Print the response from the LLM in a human-readable format.
@@ -954,11 +954,45 @@ def show_response(response: Dict[str, Any] or Generator[Dict[str, Any], None, No
     else:
         raise ValueError(f"\n{RED}nvalid response type. Must be a dictionary or a generator.{RESET}")
 
-# %% ../nbs/01_core.ipynb 125
+# %% ../nbs/01_core.ipynb 132
 import ollama
 from typing import Dict, Any, List
 
-# %% ../nbs/01_core.ipynb 126
+# %% ../nbs/01_core.ipynb 137
+import sys
+import io
+from pathlib import Path
+
+# def show_response(response: Dict[str, Any] or Generator[Dict[str, Any], None, None]) -> str:
+#     BLUE = "\033[94m"
+#     RED = "\033[91m"
+#     RESET = "\033[0m"
+
+#     if isinstance(response, dict):
+#         print("is_dict") # Uncomment for debugging
+#         content = f"{response['message']['content']}"
+#         print(f"\n{BLUE}{content}{RESET}")
+#         return content
+
+#     elif isinstance(response, Generator):
+#         print("is_generator") # Uncomment for debugging
+#         full_response = ""
+#         for chunk in response:
+#             content = chunk['message']['content']
+#             full_response += content
+#             print(f"{BLUE}{content}{RESET}", end='', flush=True)
+#         print()  # Add a newline at the end
+#         return full_response
+    
+#     elif response is None:
+#         message = "No response from the LLM."
+#         print(f"\n{RED}{message}{RESET}")
+#         return message
+    
+    # else:
+    #     raise ValueError(f"\n{RED}Invalid response type. Must be a dictionary or a generator.{RESET}")
+
+
 class Assistant:
     def __init__(self,
         sys_message: str or None = None, # The system message for the assistant; if not provided, a default message is used
@@ -977,8 +1011,8 @@ class Assistant:
         add_tools: Dict[str, Any] = {}, # Optional argument to add additional tools to the assistant, when initializing
         authentication: Optional[Dict[str, str]] = None, # Authentication credentials for API calls to external services
         dir_path: str = "../data", # The directory path to which the assistant has access on the local computer
-        messages: List[Dict[str, str]] = [], # The conversation history
-        stream: bool = True): # Whether to stream the final response from the LLM
+        messages: List[Dict[str, str]] = []): # The conversation history
+        
         self.sys_message = sys_message
         self.model = model
         self.tools = tools
@@ -986,9 +1020,8 @@ class Assistant:
         if self.tools:
             self.tools["describe_tools"] = self.describe_tools # Add the describe_tools function to the tools list for the assistant, if the tools list is not empty
         self.authentication = authentication or {}
-        self.dir_path = dir_path
+        self.dir_path = Path(dir_path).resolve()
         self.messages = messages
-        self.stream = stream
 
         # Set global variables
         global DIR_PATH
@@ -998,6 +1031,12 @@ class Assistant:
         # TODO: Consider allowing the user to set different models for different tasks and tools
         # e.g. a model such as llama 3.1 for function calls, command-r-plus for summarization, aya for translation, etc.
         
+        # ANSI escape codes, used for output formatting
+        GREY = "\033[90m"
+        BLUE = "\033[94m"
+        RED = "\033[91m"
+        RESET = "\033[0m"
+
         # Load the API keys from the environment variables or the authentication dictionary
         self.SEMANTIC_SCHOLAR_API_KEY = self.authentication.get("SEMANTIC_SCHOLAR_API_KEY")
         self.EMAIL = self.authentication.get("EMAIL")
@@ -1005,18 +1044,18 @@ class Assistant:
         if not self.SEMANTIC_SCHOLAR_API_KEY:
             self.SEMANTIC_SCHOLAR_API_KEY = os.environ.get("SEMANTIC_SCHOLAR_API_KEY")
             if self.SEMANTIC_SCHOLAR_API_KEY:
-                print("Loaded Semantic Scholar API key from the environment variables.")
+                print(f"{GREY}Loaded Semantic Scholar API key from the environment variables.{RESET}")
         if not self.EMAIL:
             self.EMAIL = os.environ.get("EMAIL")
             if self.EMAIL:
-                print("Loaded email address from the environment variables.")
+                print(f"{GREY}Loaded email address from the environment variables.{RESET}")
 
         # Generate the default directory for storing data files if it does not exist
         if not os.path.exists(DIR_PATH):
             os.mkdir(DIR_PATH)
-            print(f"Created directory {DIR_PATH} for storing data files.\n")
+            print(f"{GREY}Created directory {DIR_PATH} for storing data files.{RESET}\n")
         else: 
-            print(f"A local directory {DIR_PATH} already exists for storing data files. No of files: {len(os.listdir(DIR_PATH))}\n")
+            print(f"{GREY}A local directory {DIR_PATH} already exists for storing data files. No of files: {len(os.listdir(DIR_PATH))}{RESET}\n")
 
         # Set the default system message if not provided
         if not self.sys_message:
@@ -1074,13 +1113,15 @@ class Assistant:
         return f"Available tools are: {self.get_tools_schema()}\n State your capabilities based the available tools in a conversational manner."
         # return f"{self.pprint_tools()}\n State your capabilities based the available tools in a conversational manner."
 
-    def chat(self, prompt: str, show_progress: bool = False):
+    def chat(self, prompt: str, show_progress: bool = False, stream_response: bool = True, redirect_output: bool = False):
         """
         Start a conversation with the AI assistant.
 
         Args:
             prompt (str): The user's prompt or question.
             show_progress (bool): Whether to show the step-by-step progress of the fuction calls, including the tool calls and tool outputs. Default is False.
+            stream_response (bool): Whether to stream the final response from the LLM. Default is True. Automatically set to True if redirect_output is True.
+            redirect_output (bool): Whether to redirect the output to be compatible with st.write_stream. Default is False.
 
         Returns:
             str: The AI assistant's response.
@@ -1145,38 +1186,60 @@ class Assistant:
                 }
             ) 
 
+        if redirect_output: # If the output is to be redirected...
+            stream_response = True # always use streaming for compatibility with st.write_stream
+
         # Make a second request to the LLM with the tool output to generate a final response
         if show_progress: print("Generating final response...")
         response = ollama.chat(
             model=self.model,
             format="", # Set to empty string to avoid JSON formatting; If JSON formatting is needed, set to "json"
             messages=self.messages,
-            stream=self.stream,
+            stream=stream_response, # Set to True , response will be a generator
         )
-
+        
         # Advanced parameters (optional):
         # keep_alive: controls how long the model will stay loaded into memory following the request (default: 5m)
         # options: additional model parameters listed in the documentation for the Modelfile such as temperature
         # for more information, visi:
         # https://github.com/ollama/ollama/blob/main/docs/api.md
         # https://github.com/ollama/ollama/blob/main/docs/modelfile.md#valid-parameters-and-values
+        
+        if redirect_output:
+            # Return a generator for st.write_stream
+            def response_generator():
+                full_content = ""
+                for chunk in response:
+                    content = chunk['message']['content']
+                    full_content += content
+                    yield content
+                self.messages.append({'role': 'assistant', 'content': full_content})
+            return response_generator()
 
-        # Show the response message and add it to the conversation history
-        response_message = show_response(response)
-        # print(response_message)
-        self.messages.append({'role': 'assistant', 'content': response_message})
+        else:
+            if isinstance(response, dict):
+                content = response['message']['content']
+                self.messages.append({'role': 'assistant', 'content': content})
+                print(content)
+                return content  # Return the content directly, not as a generator
+                
+            elif hasattr(response, '__iter__'):  # Check if it's iterable (for streaming)
+                full_content = ""
+                for chunk in response:
+                    content = chunk['message']['content']
+                    full_content += content
+                    print(content, end='', flush=True)
+                self.messages.append({'role': 'assistant', 'content': full_content})
+                return full_content  # Return the full content, not as a generator
 
-        return None
-
-
-# %% ../nbs/01_core.ipynb 128
+# %% ../nbs/01_core.ipynb 145
 def add_to_class(Class: type):
     """Register functions as methods in a class that has already been defined."""
     def wrapper(obj):
         setattr(Class, obj.__name__, obj)
     return wrapper
 
-# %% ../nbs/01_core.ipynb 129
+# %% ../nbs/01_core.ipynb 146
 @add_to_class(Assistant)
 def show_conversion_history(self, show_function_calls: bool = False):
     """Display the conversation history.
@@ -1212,13 +1275,13 @@ def show_conversion_history(self, show_function_calls: bool = False):
                 for fn_return in message['content']:
                     print(f"{BOLD}{GREY}Function return:{RESET} {GREY}{fn_return}{RESET}\n")
 
-# %% ../nbs/01_core.ipynb 130
+# %% ../nbs/01_core.ipynb 147
 @add_to_class(Assistant)
 def clear_conversion_history(self):
     """Clear the conversation history."""
     self.messages = [{'role': "system", 'content': self.sys_message},]
 
-# %% ../nbs/01_core.ipynb 132
+# %% ../nbs/01_core.ipynb 149
 @add_to_class(Assistant)
 def pprint_tools(self):
     for tool in self.get_tools_schema():   
