@@ -452,6 +452,7 @@ get more detailed information (i.e., the source code), like so:
 assistant.chat?
 assistant??
 ```
+:::
 
 ## Developer Guide
 
