@@ -5,9 +5,9 @@
 
 > [!WARNING]
 >
-> This library is under active development and is not yet ready for
-> production use. Report any issues or feature requests on the [GitHub
-> repository](https://github.com/nicomarr/scholaris/issues).
+> This Python package is under active development and is not yet ready
+> for production use. Report any issues or feature requests on the
+> [GitHub repository](https://github.com/nicomarr/scholaris/issues).
 
 ## Installation
 
@@ -610,19 +610,20 @@ def clear_conversion_history(self):
     self.messages = [{'role': "system", 'content': self.sys_message},]
 ```
 
-### Contributing to this library
+### Contributing to Scholaris
 
-This library has been developed using the
-[nbdev](https://nbdev.fast.ai/) framework. To contribute to this
-library, install `nbdev` and follow the [nbdev
+This Python package has been developed using
+[nbdev](https://nbdev.fast.ai/). To contribute to this package, install
+`nbdev` and follow the [nbdev
 documentation](https://nbdev.fast.ai/tutorials/tutorial.html) to set up
 your development environment.
 
 ## Acknowledgements
 
 Many thanks to the developers of [Ollama](https://ollama.com/) and the
-[Ollama Python library](https://pypi.org/project/ollama/) for providing
-the core functionality that Scholaris is built upon. Special thanks to
+[Ollama Python Library](https://pypi.org/project/ollama/) for providing
+the core functionality that Scholaris is built upon, and thanks to all
+the providers of open-source and open-weight models. Special thanks to
 the developers of [nbdev](https://nbdev.fast.ai/) for making it easy to
-develop and document this library, and for many insightful tutorials and
+develop and document this package, and for many insightful tutorials and
 inspirations!

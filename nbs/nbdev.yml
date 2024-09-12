@@ -4,6 +4,6 @@ project:
 website:
   title: "scholaris"
   site-url: "https://nmarr.github.io/scholaris"
-  description: "A Python library to set up an advanced research assistant leveraging function calling capabilities with LLMs on your local computer"
+  description: "A Python package to set up an advanced research assistant leveraging function calling capabilities with LLMs on your local computer"
   repo-branch: main
   repo-url: "https://github.com/nmarr/scholaris"
