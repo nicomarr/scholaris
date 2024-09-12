@@ -68,13 +68,32 @@ def get_last_tool_names(messages):
             break # Exit the loop after the first occurrence
     return ", ".join(tool_names) if tool_names else "No tools used."
 
+# Page configuration
+st.set_page_config(
+        page_title="Scholaris", 
+        page_icon=":speech_balloon:",
+        layout="wide", 
+        initial_sidebar_state="collapsed", 
+        menu_items={
+            "About": "This is a graphical user interface for Scholaris, a conversational AI assistant for academic research.",
+            "Get Help": "https://github.com/nicomarr/scholaris/blob/main/nbs/02_ui.ipynb",
+            "Report a Bug": "https://github.com/nicomarr/scholaris/issues/new"
+        }
+        )
 
 # Initialize the assistant if not already in session state
 if "assistant" not in st.session_state:
     try:
         st.session_state.assistant = Assistant(model="llama3.1", dir_path="./data")
     except Exception as e:
-        st.error(f"An error occurred: {e}")
+        if "[Errno 61] Connection refused" in str(e):
+            st.error(f"""An error occurred: {e}. Please make sure Ollama is installed on your local computer and the server is running.
+            For troubleshooting, refer to the Ollama docs of GitHub:
+            [README](https://github.com/ollama/ollama/blob/main/docs/README.md)
+            [FAQ](https://github.com/ollama/ollama/blob/main/docs/faq.md).
+            """)
+        else:
+            st.error(f"An error occurred: {e}")
         st.stop()
 
 # Initialize other session state variables
