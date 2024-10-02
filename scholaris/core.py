@@ -6,8 +6,7 @@
 __all__ = ['T', 'generate_json_schema', 'json_schema_decorator', 'get_file_names', 'extract_text_from_pdf',
            'extract_title_and_first_author', 'get_titles_and_first_authors', 'summarize_local_document',
            'describe_python_code', 'convert_id', 'detect_id_type', 'id_converter_tool', 'query_openalex_api',
-           'query_semantic_scholar_api', 'respond_to_generic_queries', 'show_response', 'Assistant', 'add_to_class',
-           'show_conversion_history', 'clear_conversion_history', 'pprint_tools']
+           'query_semantic_scholar_api', 'respond_to_generic_queries', 'Assistant', 'add_to_class']
 
 # %% ../nbs/01_core.ipynb 34
 import inspect
@@ -923,38 +922,6 @@ def respond_to_generic_queries() -> str:
 # %% ../nbs/01_core.ipynb 126
 from typing import Generator
 
-# %% ../nbs/01_core.ipynb 127
-def show_response(response: Dict[str, Any] or Generator[Dict[str, Any], None, None]) -> None:
-    """
-    Print the response from the LLM in a human-readable format.
-
-    Args:
-        response (Dict[str, Any] or Generator[Dict[str, Any], None, None]): The response from the LLM.
-    """
-    # ANSI escape code for blue and red text
-    BLUE = "\033[94m"
-    RED = "\033[91m"
-    RESET = "\033[0m"
-
-    if isinstance(response, dict):
-        print(f"\n{BLUE}{response['message']['content']}{RESET}")
-        return response['message']['content']
-
-    elif isinstance(response, Generator):
-        print("\n")
-        _response = ""
-        for chunk in response:
-            _response += chunk['message']['content']
-            print(f"{BLUE}{chunk['message']['content']}{RESET}", end='', flush=True)
-        return _response
-    
-    elif response is None:
-        print(f"\n{RED}No response from the LLM.{RESET}")
-        return None
-    
-    else:
-        raise ValueError(f"\n{RED}nvalid response type. Must be a dictionary or a generator.{RESET}")
-
 # %% ../nbs/01_core.ipynb 129
 import ollama
 from typing import Dict, Any, List
@@ -1117,7 +1084,6 @@ class Assistant:
             str: A string with the descriptions of the available tools.
         """
         return f"Available tools are: {self.get_tools_schema()}\n State your capabilities based the available tools in a conversational manner."
-        # return f"{self.pprint_tools()}\n State your capabilities based the available tools in a conversational manner."
 
     def chat(self, prompt: str, show_progress: bool = False, stream_response: bool = True, redirect_output: bool = False):
         """
@@ -1242,61 +1208,56 @@ class Assistant:
                     print(content, end='', flush=True)
                 self.messages.append({'role': 'assistant', 'content': full_content})
                 return full_content  # Return the full content, not as a generator
+    
+    def show_conversion_history(self, show_function_calls: bool = False):
+        """Display the conversation history.
+        
+        Args:
+            show_function_calls (bool): Whether to show function calls and returns in the conversation history. Default is False.
 
-# %% ../nbs/01_core.ipynb 138
+        Returns:
+            None
+        """
+
+        # ANSI escape code for blue and red text
+        BLUE = "\033[94m"
+        BOLD = "\033[1m"
+        GREY = "\033[90m"
+        RESET = "\033[0m"
+
+        for message in self.messages:
+            if message['role'] != 'system':
+                if message['role'] == 'user':
+                    print(f"{BOLD}User:{RESET} {message['content']}\n")
+                elif message['role'] == 'assistant':
+                    if 'content' in message and message['content']:
+                        print(f"{BOLD}{BLUE}Assistant response:{RESET} {BLUE}{message['content']}{RESET}\n")
+                    if 'tool_calls' in message and message['tool_calls'] and show_function_calls:
+                        print(f"{BOLD}{BLUE}Assistant function calls:{RESET} ", end='')
+                        for tool in message['tool_calls']:
+                            print(f"{BLUE}{tool['function']['name']}() with arguments {tool['function']['arguments']}{RESET}\n")
+                elif message['role'] == 'tool' and show_function_calls:
+                    # convert str to list
+                    if isinstance(message['content'], str):
+                        message['content'] = [message['content']]
+                    for fn_return in message['content']:
+                        print(f"{BOLD}{GREY}Function return:{RESET} {GREY}{fn_return}{RESET}\n")
+    
+    def clear_conversion_history(self):
+        """Clear the conversation history."""
+        self.messages = [{'role': "system", 'content': self.sys_message},]
+    
+    def pprint_tools(self):
+        """Pretty-print the descriptions of the available tools."""
+        for tool in self.get_tools_schema():   
+            print(f"""* Tool name: {tool.get("function", {}).get("name", "No name available.")}
+        Description: {tool.get("function", {}).get("description", "No description available.")}
+            """)
+        return None
+
+# %% ../nbs/01_core.ipynb 143
 def add_to_class(Class: type):
     """Register functions as methods in a class that has already been defined."""
     def wrapper(obj):
         setattr(Class, obj.__name__, obj)
     return wrapper
-
-# %% ../nbs/01_core.ipynb 139
-@add_to_class(Assistant)
-def show_conversion_history(self, show_function_calls: bool = False):
-    """Display the conversation history.
-    
-    Args:
-        show_function_calls (bool): Whether to show function calls and returns in the conversation history. Default is False.
-
-    Returns:
-        None
-    """
-
-    # ANSI escape code for blue and red text
-    BLUE = "\033[94m"
-    BOLD = "\033[1m"
-    GREY = "\033[90m"
-    RESET = "\033[0m"
-
-    for message in self.messages:
-        if message['role'] != 'system':
-            if message['role'] == 'user':
-                print(f"{BOLD}User:{RESET} {message['content']}\n")
-            elif message['role'] == 'assistant':
-                if 'content' in message and message['content']:
-                    print(f"{BOLD}{BLUE}Assistant response:{RESET} {BLUE}{message['content']}{RESET}\n")
-                if 'tool_calls' in message and message['tool_calls'] and show_function_calls:
-                    print(f"{BOLD}{BLUE}Assistant function calls:{RESET} ", end='')
-                    for tool in message['tool_calls']:
-                        print(f"{BLUE}{tool['function']['name']}() with arguments {tool['function']['arguments']}{RESET}\n")
-            elif message['role'] == 'tool' and show_function_calls:
-                # convert str to list
-                if isinstance(message['content'], str):
-                    message['content'] = [message['content']]
-                for fn_return in message['content']:
-                    print(f"{BOLD}{GREY}Function return:{RESET} {GREY}{fn_return}{RESET}\n")
-
-# %% ../nbs/01_core.ipynb 140
-@add_to_class(Assistant)
-def clear_conversion_history(self):
-    """Clear the conversation history."""
-    self.messages = [{'role': "system", 'content': self.sys_message},]
-
-# %% ../nbs/01_core.ipynb 142
-@add_to_class(Assistant)
-def pprint_tools(self):
-    for tool in self.get_tools_schema():   
-        print(f"""* Tool name: {tool.get("function", {}).get("name", "No name available.")}
-    Description: {tool.get("function", {}).get("description", "No description available.")}
-        """)
-    return None
