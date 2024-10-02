@@ -2,8 +2,8 @@
 
 d = { 'settings': { 'branch': 'main',
                 'doc_baseurl': '/scholaris',
-                'doc_host': 'https://nmarr.github.io',
-                'git_url': 'https://github.com/nmarr/scholaris',
+                'doc_host': 'https://nicomarr.github.io',
+                'git_url': 'https://github.com/nicomarr/scholaris',
                 'lib_path': 'scholaris'},
   'syms': { 'scholaris.core': { 'scholaris.core.Assistant': ('core.html#assistant', 'scholaris/core.py'),
                                 'scholaris.core.Assistant.__init__': ('core.html#assistant.__init__', 'scholaris/core.py'),
