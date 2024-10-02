@@ -156,3 +156,6 @@ data/*
 proprietary_data/*
 nbs/ignore.ipynb
 _drafts/
+
+# PyPI credentials
+.pypirc
