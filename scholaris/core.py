@@ -7,7 +7,7 @@ __all__ = ['T', 'generate_json_schema', 'json_schema_decorator', 'get_file_names
            'extract_title_and_first_author', 'get_titles_and_first_authors', 'summarize_local_document',
            'describe_python_code', 'convert_id', 'detect_id_type', 'id_converter_tool', 'query_openalex_api',
            'query_semantic_scholar_api', 'respond_to_generic_queries', 'show_response', 'Assistant', 'add_to_class',
-           'show_conversion_history', 'clear_conversion_history', 'pprint_tools']
+           'show_conversation_history', 'clear_conversation_history', 'pprint_tools']
 
 # %% ../nbs/01_core.ipynb 34
 import inspect
@@ -1252,7 +1252,7 @@ def add_to_class(Class: type):
 
 # %% ../nbs/01_core.ipynb 139
 @add_to_class(Assistant)
-def show_conversion_history(self, show_function_calls: bool = False):
+def show_conversation_history(self, show_function_calls: bool = False):
     """Display the conversation history.
     
     Args:
@@ -1288,7 +1288,7 @@ def show_conversion_history(self, show_function_calls: bool = False):
 
 # %% ../nbs/01_core.ipynb 140
 @add_to_class(Assistant)
-def clear_conversion_history(self):
+def clear_conversation_history(self):
     """Clear the conversation history."""
     self.messages = [{'role': "system", 'content': self.sys_message},]
 
