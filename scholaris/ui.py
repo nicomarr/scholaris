@@ -121,7 +121,7 @@ if st.session_state.assistant:
         if st.button(label="Reset", type="primary", 
             help="Click to restart the conversation.", 
             key="reset_messages"):
-                st.session_state.assistant.clear_conversion_history()
+                st.session_state.assistant.clear_conversation_history()
                 st.session_state.assistant.messages.append({"role": "assistant", "content": "How can I help you?"})
                 st.write("Conversation history cleared!")
             # st.rerun()  # Rerun the script to update the chat interface and the sidebar

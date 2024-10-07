@@ -922,11 +922,11 @@ def respond_to_generic_queries() -> str:
 # %% ../nbs/01_core.ipynb 126
 from typing import Generator
 
-# %% ../nbs/01_core.ipynb 129
+# %% ../nbs/01_core.ipynb 127
 import ollama
 from typing import Dict, Any, List
 
-# %% ../nbs/01_core.ipynb 130
+# %% ../nbs/01_core.ipynb 128
 import sys
 import io
 from pathlib import Path
@@ -1209,7 +1209,7 @@ class Assistant:
                 self.messages.append({'role': 'assistant', 'content': full_content})
                 return full_content  # Return the full content, not as a generator
     
-    def show_conversion_history(self, show_function_calls: bool = False):
+    def show_conversation_history(self, show_function_calls: bool = False):
         """Display the conversation history.
         
         Args:
@@ -1243,7 +1243,7 @@ class Assistant:
                     for fn_return in message['content']:
                         print(f"{BOLD}{GREY}Function return:{RESET} {GREY}{fn_return}{RESET}\n")
     
-    def clear_conversion_history(self):
+    def clear_conversation_history(self):
         """Clear the conversation history."""
         self.messages = [{'role': "system", 'content': self.sys_message},]
     
@@ -1255,7 +1255,7 @@ class Assistant:
             """)
         return None
 
-# %% ../nbs/01_core.ipynb 143
+# %% ../nbs/01_core.ipynb 141
 def add_to_class(Class: type):
     """Register functions as methods in a class that has already been defined."""
     def wrapper(obj):
