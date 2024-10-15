@@ -14,8 +14,18 @@ website:
   open-graph: true
   repo-actions: [issue]
   navbar:
-    background: primary
+    background: "#F0F0F0"
     search: true
+    left:
+      - text: User & Developer Guide
+        href: index.ipynb
+      - text: Source Code
+        href: 01_core.ipynb
+      - text: User Interfaces
+        href: 02_ui.ipynb
+    right:
+      - icon: github
+        href: "https://github.com/nicomarr/scholaris"
   sidebar:
     style: floating
 

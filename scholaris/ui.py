@@ -1,3 +1,4 @@
+#| code-fold: true
 from scholaris.core import *
 import streamlit as st
 import ollama
