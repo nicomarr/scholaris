@@ -99,7 +99,7 @@ class:
 > ### Prerequisite: Ollama setup
 >
 > Make sure the Ollama app is installed on your local computer and Llama
-> 2 7B has been downloaded and is running before initializing the
+> 3.1 8B has been downloaded and is running before initializing the
 > assistant. Otherwise, the initialization will abort.
 
 > [!NOTE]
