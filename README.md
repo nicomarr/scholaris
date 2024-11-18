@@ -53,13 +53,13 @@ such as with Conda:
 > [here](https://docs.anaconda.com/free/miniconda/#quick-command-line-install).
 
 ``` sh
-$ conda create -n scholaris-env python=3.12
+conda create -n scholaris-env python=3.12
 ```
 
 **Step 3.** Activate the virtual environment:
 
 ``` sh
-$ conda activate scholaris-env
+conda activate scholaris-env
 ```
 
 **Step 4.** Install latest scholaris Python package:
@@ -69,13 +69,13 @@ $ conda activate scholaris-env
 #### from PyPI
 
 ``` sh
-$ pip install scholaris
+pip install scholaris
 ```
 
 #### from the GitHub repository
 
 ``` sh
-$ pip install git+https://github.com/nicomarr/scholaris.git
+pip install git+https://github.com/nicomarr/scholaris.git
 ```
 
 </div>
